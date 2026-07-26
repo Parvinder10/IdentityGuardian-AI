@@ -155,16 +155,16 @@
 
         .tab-btn-container {
             display: flex;
-            gap: 15px;
+            gap: 10px;
         }
 
         .tab-btn {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.1);
             color: var(--text-sub);
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -724,6 +724,7 @@
             <button class="tab-btn" id="tab-btn-vlm" onclick="switchTab('vlm')">VLM Intelligence</button>
             <button class="tab-btn" id="tab-btn-ocr" onclick="switchTab('ocr')">OCR Research Lab</button>
             <button class="tab-btn" id="tab-btn-experiments" onclick="switchTab('experiments')">Research Experiments</button>
+            <button class="tab-btn" id="tab-btn-failure" onclick="switchTab('failure')">Failure & Explainability Lab</button>
         </div>
 
         <button class="logout-btn" onclick="handleLogout()">Exit Node</button>
@@ -1536,6 +1537,100 @@
         </div>
     </div>
 
+    <!-- Tab 6: Failure & Explainability Lab -->
+    <div id="tab-content-failure" class="tab-content-wrapper" style="display: none;">
+        <div class="container">
+            <!-- Left Column: Pipeline Failure Diagnostics -->
+            <div class="card">
+                <div class="card-title">🔍 Pipeline Failure Diagnostics</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Simulate verification parameters to automatically diagnose, group, and resolve execution anomalies.
+                </div>
+                
+                <!-- Inputs sliders -->
+                <div class="input-group">
+                    <label>Simulated Face Similarity: <span id="val-fail-face" style="color: var(--primary)">0.85</span></label>
+                    <input type="range" id="fail-face-sim" class="search-input" min="0.0" max="1.0" step="0.05" value="0.85" oninput="document.getElementById('val-fail-face').innerText = this.value; runFailureAnalysis();">
+                </div>
+
+                <div class="input-group">
+                    <label>Simulated OCR Char Errors: <span id="val-fail-ocr" style="color: var(--primary)">0.05</span></label>
+                    <input type="range" id="fail-ocr-err" class="search-input" min="0.0" max="1.0" step="0.05" value="0.05" oninput="document.getElementById('val-fail-ocr').innerText = this.value; runFailureAnalysis();">
+                </div>
+
+                <div class="input-group">
+                    <label>Simulated RAG Retrieval Score: <span id="val-fail-rag" style="color: var(--primary)">0.85</span></label>
+                    <input type="range" id="fail-rag-score" class="search-input" min="0.0" max="1.0" step="0.05" value="0.85" oninput="document.getElementById('val-fail-rag').innerText = this.value; runFailureAnalysis();">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                        <input type="checkbox" id="fail-forgery" onchange="runFailureAnalysis()"> Forgery detected Warning flag
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                        <input type="checkbox" id="fail-meta" onchange="runFailureAnalysis()"> Layout metadata mismatch Warning flag
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                        <input type="checkbox" id="fail-hallucination" onchange="runFailureAnalysis()"> Text hallucination Warning flag
+                    </label>
+                </div>
+
+                <button class="action-btn" onclick="runFailureAnalysis()" style="margin-top: 25px;">Diagnose Pipeline Failure</button>
+
+                <!-- Diagnosis Readout Cards -->
+                <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px;">Classification Readout</div>
+                    
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15); margin-bottom: 12px;">
+                        <div style="font-size: 10px; color: var(--text-sub)">CLASSIFIED FAILURES</div>
+                        <div id="fail-classified-list" style="margin-top: 8px;">
+                            <span class="badge badge-success">None (Healthy Scan)</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15); margin-bottom: 12px;">
+                        <div style="font-size: 10px; color: var(--text-sub)">FAILURE CLUSTER GROUP</div>
+                        <div id="fail-cluster" style="font-size: 13px; font-weight: 700; color: var(--primary); margin-top: 6px;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: 5-Way Explainability Gallery -->
+            <div class="card">
+                <div class="card-title">🎨 5-Way Explainability visualizer</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Select an explainability sub-tab to visualize attributions, heatmaps, and local boundary approximations.
+                </div>
+
+                <!-- Tabs switcher -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="tab-btn active" id="sub-tab-ig" onclick="switchExplainabilityTab('ig')" style="font-size: 10px; padding: 6px 10px;">Integrated Gradients</button>
+                    <button class="tab-btn" id="sub-tab-gradcam" onclick="switchExplainabilityTab('gradcam')" style="font-size: 10px; padding: 6px 10px;">Grad-CAM</button>
+                    <button class="tab-btn" id="sub-tab-shap" onclick="switchExplainabilityTab('shap')" style="font-size: 10px; padding: 6px 10px;">SHAP Attributes</button>
+                    <button class="tab-btn" id="sub-tab-lime" onclick="switchExplainabilityTab('lime')" style="font-size: 10px; padding: 6px 10px;">LIME Boundary</button>
+                    <button class="tab-btn" id="sub-tab-att" onclick="switchExplainabilityTab('att')" style="font-size: 10px; padding: 6px 10px;">Attention Map</button>
+                </div>
+
+                <!-- Canvas Viewer -->
+                <div class="viewer-container" style="min-height: 250px; background: #060913; padding: 15px;">
+                    <img id="explain-canvas-viewer" style="width: 100%; max-height: 240px; object-fit: contain;" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='60'></svg>" alt="Attribution Canvas">
+                </div>
+
+                <div class="card" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 10px; color: var(--text-sub)">ROOT-CAUSE ANALYSIS</div>
+                    <div id="fail-root-cause" style="font-size: 12px; line-height: 1.5; color: #a2b4cd; margin-top: 6px;">--</div>
+                </div>
+
+                <div class="card" style="margin-top: 12px; padding: 15px; background: rgba(0,0,0,0.15); border: 1px solid rgba(0,230,118,0.2)">
+                    <div style="font-size: 10px; color: var(--success)">RECOMMENDED RESOLUTION</div>
+                    <div id="fail-remedy" style="font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--text-main); margin-top: 6px;">--</div>
+                </div>
+
+                <button class="action-btn" onclick="runExplainabilityGeneration()" style="background: linear-gradient(135deg, #00e676, #00b0ff); margin-top: 20px;">Regenerate Attribution Maps</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let activeLearningCounter = 0;
         let webcamStream = null;
@@ -1563,12 +1658,14 @@
             const btnVlm = document.getElementById('tab-btn-vlm');
             const btnOcr = document.getElementById('tab-btn-ocr');
             const btnExp = document.getElementById('tab-btn-experiments');
+            const btnFail = document.getElementById('tab-btn-failure');
             
             const contentKyc = document.getElementById('tab-content-kyc');
             const contentGraph = document.getElementById('tab-content-graph');
             const contentVlm = document.getElementById('tab-content-vlm');
             const contentOcr = document.getElementById('tab-content-ocr');
             const contentExp = document.getElementById('tab-content-experiments');
+            const contentFail = document.getElementById('tab-content-failure');
 
             // Deactivate all
             btnKyc.classList.remove('active');
@@ -1576,11 +1673,13 @@
             btnVlm.classList.remove('active');
             btnOcr.classList.remove('active');
             btnExp.classList.remove('active');
+            btnFail.classList.remove('active');
             contentKyc.style.display = 'none';
             contentGraph.style.display = 'none';
             contentVlm.style.display = 'none';
             contentOcr.style.display = 'none';
             contentExp.style.display = 'none';
+            contentFail.style.display = 'none';
 
             if (tab === 'kyc') {
                 btnKyc.classList.add('active');
@@ -1602,6 +1701,11 @@
                 btnExp.classList.add('active');
                 contentExp.style.display = 'block';
                 loadExperimentsList();
+            } else if (tab === 'failure') {
+                btnFail.classList.add('active');
+                contentFail.style.display = 'block';
+                runExplainabilityGeneration();
+                runFailureAnalysis();
             }
         }
 
@@ -2604,6 +2708,91 @@
                 consoleBox.innerHTML += `<br><span style="color: var(--danger)">[Error] Experiment run failed: ${err.message}</span>`;
             } finally {
                 loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // FAILURE ANALYSIS & EXPLAINABILITY
+        // ==========================================
+        async function runFailureAnalysis() {
+            const face = parseFloat(document.getElementById('fail-face-sim').value);
+            const ocr = parseFloat(document.getElementById('fail-ocr-err').value);
+            const rag = parseFloat(document.getElementById('fail-rag-score').value);
+            const forgery = document.getElementById('fail-forgery').checked;
+            const meta = document.getElementById('fail-meta').checked;
+            const hallucination = document.getElementById('fail-hallucination').checked;
+
+            const requestPayload = {
+                face_sim: face,
+                ocr_errors: ocr,
+                forgery_detected: forgery,
+                metadata_mismatch: meta,
+                rag_score: rag,
+                hallucination_detected: hallucination
+            };
+
+            try {
+                const response = await fetch("/failure/analyze", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestPayload)
+                });
+                const res = await response.json();
+
+                // Format classified failures list
+                const listContainer = document.getElementById('fail-classified-list');
+                listContainer.innerHTML = '';
+                res.classified_failures.forEach(f => {
+                    const badgeClass = f.includes('None') ? 'badge-success' : 'badge-danger';
+                    listContainer.innerHTML += `<span class="badge ${badgeClass}" style="margin-right: 5px; margin-bottom: 5px;">${f}</span>`;
+                });
+
+                document.getElementById('fail-cluster').innerText = res.failure_cluster;
+                document.getElementById('fail-root-cause').innerText = res.root_cause_analysis;
+                document.getElementById('fail-remedy').innerText = res.recommended_improvements;
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        let explainabilityMaps = {};
+
+        async function runExplainabilityGeneration() {
+            try {
+                const response = await fetch("/explain/all", { method: "POST" });
+                explainabilityMaps = await response.json();
+                switchExplainabilityTab('ig');
+            } catch (err) {
+                console.error("Failed to load explainability maps:", err);
+            }
+        }
+
+        function switchExplainabilityTab(mode) {
+            // Deactivate all sub-tab buttons
+            document.getElementById('sub-tab-ig').classList.remove('active');
+            document.getElementById('sub-tab-gradcam').classList.remove('active');
+            document.getElementById('sub-tab-shap').classList.remove('active');
+            document.getElementById('sub-tab-lime').classList.remove('active');
+            document.getElementById('sub-tab-att').classList.remove('active');
+
+            const viewer = document.getElementById('explain-canvas-viewer');
+            
+            if (mode === 'ig') {
+                document.getElementById('sub-tab-ig').classList.add('active');
+                viewer.src = explainabilityMaps.integrated_gradients;
+            } else if (mode === 'gradcam') {
+                document.getElementById('sub-tab-gradcam').classList.add('active');
+                viewer.src = explainabilityMaps.gradcam;
+            } else if (mode === 'shap') {
+                document.getElementById('sub-tab-shap').classList.add('active');
+                viewer.src = explainabilityMaps.shap;
+            } else if (mode === 'lime') {
+                document.getElementById('sub-tab-lime').classList.add('active');
+                viewer.src = explainabilityMaps.lime;
+            } else if (mode === 'att') {
+                document.getElementById('sub-tab-att').classList.add('active');
+                viewer.src = explainabilityMaps.attention;
             }
         }
     </script>

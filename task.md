@@ -1,7 +1,7 @@
-# Task Checklist - Research Experiments & Benchmark Suite
+# Task Checklist - Failure & Explainability Lab
 
-- `[x]` **Research Experiments & Benchmark Suite Implementation**
-  - `[x]` Implement the 10 scientific experiments definitions and automated report writer in `src/evaluation/experiments_framework.py`
-  - `[x]` Integrate experiment `/experiments/list` and `/experiments/run` routes in `main.py`
-  - `[x]` Extend the dashboard UI with an Experiments portal, interactive dropdown selector, and results tables in `src/templates/index.html`
-  - `[x]` Create unit tests in `tests/test_experiments.py`
+- `[x]` **Failure Analysis & Explainability Laboratory Implementation**
+  - `[x]` Implement failure classification models and the 5 explainability metrics in `src/models/failure_lab.py`
+  - `[x]` Integrate failure `/failure/analyze` and `/explain/all` routes in `main.py`
+  - `[x]` Extend the dashboard UI with a Failure diagnostics console and 5-way explainability gallery in `src/templates/index.html`
+  - `[x]` Create unit tests in `tests/test_failure_lab.py`

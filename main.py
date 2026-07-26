@@ -25,6 +25,7 @@ from src.models.vlm_interface import VLMRegistry
 from src.models.vlm_finetuning import VLMFineTuningPipeline, VLMDocDataset
 from src.models.ocr_research import OCRResearchManager
 from src.evaluation.experiments_framework import ExperimentRegistry
+from src.models.failure_lab import FailureClassifier, ExplainabilityEngine
 
 app = FastAPI(
     title="IdentityGuardian AI API",
@@ -514,4 +515,39 @@ def run_experiment(payload: RunExperimentPayload):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Experiment Run Error: {str(e)}")
+
+# Failure Lab Setup
+failure_classifier = FailureClassifier()
+explainability_engine = ExplainabilityEngine()
+
+class FailureAnalyzePayload(BaseModel):
+    face_sim: float
+    ocr_errors: float
+    forgery_detected: bool
+    metadata_mismatch: bool
+    rag_score: float
+    hallucination_detected: bool
+
+@app.post("/failure/analyze")
+def analyze_failure(payload: FailureAnalyzePayload):
+    try:
+        res = failure_classifier.classify_failure(
+            face_sim=payload.face_sim,
+            ocr_errors=payload.ocr_errors,
+            forgery_detected=payload.forgery_detected,
+            metadata_mismatch=payload.metadata_mismatch,
+            rag_score=payload.rag_score,
+            hallucination_detected=payload.hallucination_detected
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failure Analysis Error: {str(e)}")
+
+@app.post("/explain/all")
+def get_all_explanations():
+    try:
+        res = explainability_engine.generate_all_explanations()
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Explainability Generation Error: {str(e)}")
 
