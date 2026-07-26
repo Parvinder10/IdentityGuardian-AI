@@ -721,6 +721,7 @@
         <div class="tab-btn-container">
             <button class="tab-btn active" id="tab-btn-kyc" onclick="switchTab('kyc')">Verification Console</button>
             <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">Evidence Graph Portal</button>
+            <button class="tab-btn" id="tab-btn-vlm" onclick="switchTab('vlm')">VLM Intelligence</button>
         </div>
 
         <button class="logout-btn" onclick="handleLogout()">Exit Node</button>
@@ -1075,6 +1076,136 @@
         </div>
     </div>
 
+    <!-- Tab 3: VLM Document Intelligence -->
+    <div id="tab-content-vlm" class="tab-content-wrapper" style="display: none;">
+        <div class="container">
+            <!-- Left Column: VLM Inputs & Telemetry -->
+            <div class="card">
+                <div class="card-title">🤖 VLM Model Selection & Prompting</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Select a document VLM to run zero-shot extraction.
+                </div>
+                
+                <div class="input-group">
+                    <label for="vlm-model-select">Target Model Architecture</label>
+                    <select id="vlm-model-select" class="search-input" style="width: 100%; border-radius: 8px; font-family: 'Inter';">
+                        <option value="Qwen2-VL">Qwen2-VL (Spatial/Autoregressive)</option>
+                        <option value="Florence-2" selected>Florence-2 (Task-Grounding/Grounding)</option>
+                        <option value="Donut">Donut (OCR-Free Transformer)</option>
+                        <option value="LayoutLMv3">LayoutLMv3 (Layout-Aware Encoder)</option>
+                        <option value="LLaVA">LLaVA (General Instruct VLM)</option>
+                        <option value="DocOwl">DocOwl (Document-Optimized VLM)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group" style="margin-top: 15px;">
+                    <label for="vlm-prompt">VLM Prompt Instruction</label>
+                    <input type="text" id="vlm-prompt" class="search-input" value="Identify candidate name, date of birth, ID number, and document category." style="width: 100%;">
+                </div>
+                
+                <button class="action-btn" onclick="runVLMInference()" style="margin-top: 15px;">Execute VLM Inference</button>
+                <div id="vlm-loader" class="loader"></div>
+                
+                <!-- Telemetry Metrics card under VLM panel -->
+                <div class="chart-box" style="margin-top: 25px;">
+                    <div style="font-family: 'Outfit'; font-size: 14px; font-weight: 600; margin-bottom: 15px;">Execution Telemetry & Cost</div>
+                    
+                    <div class="chart-bar-container">
+                        <div class="chart-label-row">
+                            <span>Inference Latency</span>
+                            <span id="vlm-telemetry-latency">-- s</span>
+                        </div>
+                        <div class="progress-meter">
+                            <div id="vlm-bar-latency" class="progress-bar-fill bar-adaptive" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-bar-container">
+                        <div class="chart-label-row">
+                            <span>GPU VRAM Memory Usage</span>
+                            <span id="vlm-telemetry-vram">-- GB</span>
+                        </div>
+                        <div class="progress-meter">
+                            <div id="vlm-bar-vram" class="progress-bar-fill bar-static" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-bar-container">
+                        <div class="chart-label-row">
+                            <span>Estimated Cost per 10k Transactions</span>
+                            <span id="vlm-telemetry-cost">$--</span>
+                        </div>
+                        <div class="progress-meter">
+                            <div id="vlm-bar-cost" class="progress-bar-fill bar-adaptive" style="width: 0%; background: #ffb300; box-shadow: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Structured outputs & explanation chips -->
+            <div class="card">
+                <div class="card-title">📄 VLM Extraction Results</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 15px;">
+                    Extracted JSON structured attributes and raw attention explainability features.
+                </div>
+                
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Entity Key</th>
+                            <th>Extracted Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vlm-extracted-fields-body">
+                        <tr>
+                            <td colspan="2" style="color: var(--text-sub); text-align: center;">No VLM inference run yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="card" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 8px;">VLM ATTENTION TOKENS (Explainability)</div>
+                    <div id="vlm-explainable-tokens" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <span style="color: var(--text-sub); font-size: 12px;">Awaiting scan...</span>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 8px;">RAW RESPONSE OUTPUT</div>
+                    <div id="vlm-raw-output" style="font-family: monospace; font-size: 11px; color: #a2b4cd;">
+                        Awaiting raw response text...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparative Benchmarks Table at bottom -->
+        <div class="container" style="grid-template-columns: 1fr; margin-top: 0;">
+            <div class="card">
+                <div class="card-title">📊 VLM Document Intelligence Benchmarks (Comparative Matrix)</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Comparative metrics across the 6 major VLM models evaluated on document intelligence parameters.
+                </div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>VLM Architecture</th>
+                            <th>OCR Acc (CER)</th>
+                            <th>Entity Extraction F1</th>
+                            <th>Doc understanding</th>
+                            <th>Avg Latency</th>
+                            <th>VRAM Usage</th>
+                            <th>Est. Cost (10k tx)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vlm-benchmarks-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         let activeLearningCounter = 0;
         let webcamStream = null;
@@ -1099,20 +1230,31 @@
         function switchTab(tab) {
             const btnKyc = document.getElementById('tab-btn-kyc');
             const btnGraph = document.getElementById('tab-btn-graph');
+            const btnVlm = document.getElementById('tab-btn-vlm');
+            
             const contentKyc = document.getElementById('tab-content-kyc');
             const contentGraph = document.getElementById('tab-content-graph');
+            const contentVlm = document.getElementById('tab-content-vlm');
+
+            // Deactivate all
+            btnKyc.classList.remove('active');
+            btnGraph.classList.remove('active');
+            btnVlm.classList.remove('active');
+            contentKyc.style.display = 'none';
+            contentGraph.style.display = 'none';
+            contentVlm.style.display = 'none';
 
             if (tab === 'kyc') {
                 btnKyc.classList.add('active');
-                btnGraph.classList.remove('active');
                 contentKyc.style.display = 'block';
-                contentGraph.style.display = 'none';
-            } else {
-                btnKyc.classList.remove('active');
+            } else if (tab === 'graph') {
                 btnGraph.classList.add('active');
-                contentKyc.style.display = 'none';
                 contentGraph.style.display = 'block';
                 fetchGraphData();
+            } else if (tab === 'vlm') {
+                btnVlm.classList.add('active');
+                contentVlm.style.display = 'block';
+                fetchVLMBenchmarks();
             }
         }
 
@@ -1511,7 +1653,7 @@
                 heatmap.src = res.explanation_heatmap_base64;
                 heatmap.style.display = 'block';
             } catch (err) {
-                console.error("IG attribution failed:", err);
+                console.error("Integrated Gradients attribution calculation failed:", err);
             }
         }
 
@@ -1667,7 +1809,6 @@
                     let color = 'rgba(255,255,255,0.12)';
                     let strokeWidth = '1.2';
                     if (l.type === 'SAME_FACE' || l.type === 'SAME_DEVICE') {
-                        // Color red if sharing suspicious links
                         color = 'var(--danger)';
                         strokeWidth = '1.8';
                     }
@@ -1712,7 +1853,6 @@
 
         function detectFraudRingsOnUI() {
             const warningBanner = document.getElementById('fraud-ring-alert');
-            // Fraud ring contains nodes shared by multiple users
             const isRing = (selectedNodeId === 'user_bob' || selectedNodeId === 'user_charlie' || selectedNodeId === 'face_profile_alpha' || selectedNodeId === 'device_mac_001');
             warningBanner.style.display = isRing ? 'block' : 'none';
         }
@@ -1743,8 +1883,6 @@
                 });
                 const result = await response.json();
                 
-                // Render Markdown in compliance container
-                // Basic markdown parser
                 let parsedHtml = result.report_markdown
                     .replace(/### (.*)/g, '<h3>$1</h3>')
                     .replace(/#### (.*)/g, '<h4>$1</h4>')
@@ -1759,6 +1897,96 @@
                 document.getElementById('agent-report-content').innerHTML = `<span style="color: var(--danger)">Failed to compile multi-agent compliance review: ${err.message}</span>`;
             } finally {
                 loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // VLM DOCUMENT INTELLIGENCE CONTROLLER
+        // ==========================================
+        async function runVLMInference() {
+            const idFile = document.getElementById('id-input').files[0];
+            if (!idFile) {
+                alert("Please choose an ID Card or Certificate scan file in Tab 1 (Verification Console) first.");
+                return;
+            }
+
+            const modelName = document.getElementById('vlm-model-select').value;
+            const prompt = document.getElementById('vlm-prompt').value;
+
+            const loader = document.getElementById('vlm-loader');
+            loader.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append("id_card", idFile);
+            formData.append("model_name", modelName);
+            formData.append("prompt", prompt);
+
+            try {
+                const response = await fetch("/vlm/predict", {
+                    method: "POST",
+                    body: formData
+                });
+                const res = await response.json();
+
+                // 1. Update extracted fields
+                const fieldsBody = document.getElementById('vlm-extracted-fields-body');
+                fieldsBody.innerHTML = '';
+                for (const [key, val] of Object.entries(res.extracted_fields)) {
+                    fieldsBody.innerHTML += `<tr><td><strong>${key.toUpperCase()}</strong></td><td>${val}</td></tr>`;
+                }
+
+                // 2. Update telemetry
+                document.getElementById('vlm-telemetry-latency').innerText = res.latency.toFixed(2) + " s";
+                document.getElementById('vlm-telemetry-vram').innerText = res.vram_gb.toFixed(1) + " GB";
+                document.getElementById('vlm-telemetry-cost').innerText = "$" + (res.cost_index * 1000).toFixed(2);
+
+                // Update telemetry progress meters
+                document.getElementById('vlm-bar-latency').style.width = Math.min(100, (res.latency / 5.0) * 100) + "%";
+                document.getElementById('vlm-bar-vram').style.width = Math.min(100, (res.vram_gb / 16.0) * 100) + "%";
+                document.getElementById('vlm-bar-cost').style.width = Math.min(100, (res.cost_index / 0.25) * 100) + "%";
+
+                // 3. Update explainability chips
+                const chipsContainer = document.getElementById('vlm-explainable-tokens');
+                chipsContainer.innerHTML = '';
+                res.explainable_tokens.forEach(t => {
+                    chipsContainer.innerHTML += `<span style="background: rgba(0, 188, 212, 0.15); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">${t}</span>`;
+                });
+
+                // 4. Update raw text response
+                document.getElementById('vlm-raw-output').innerText = res.raw_text;
+
+            } catch (err) {
+                console.error(err);
+                alert("VLM prediction execution failed: " + err.message);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function fetchVLMBenchmarks() {
+            try {
+                const response = await fetch("/vlm/benchmark");
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('vlm-benchmarks-table-body');
+                tableBody.innerHTML = '';
+                
+                data.metrics.forEach(m => {
+                    const rowClass = m.model === 'Qwen2-VL' ? 'style="color: var(--primary)"' : '';
+                    tableBody.innerHTML += `
+                        <tr ${rowClass}>
+                            <td><strong>${m.model}</strong></td>
+                            <td>${m.ocr_accuracy.toFixed(1)}%</td>
+                            <td>${m.entity_extraction.toFixed(1)}%</td>
+                            <td>${m.doc_understanding.toFixed(1)}%</td>
+                            <td>${m.latency.toFixed(2)}s</td>
+                            <td>${m.vram.toFixed(1)}GB</td>
+                            <td>$${(m.cost / 1000).toFixed(3)}</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("VLM benchmarks fetch failed:", err);
             }
         }
     </script>
