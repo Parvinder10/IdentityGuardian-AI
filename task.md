@@ -1,7 +1,7 @@
-# Task Checklist - Synthetic Data Generator
+# Task Checklist - Experiment Tracker
 
-- `[x]` **Synthetic Data Generation Engine Implementation**
-  - `[x]` Implement image transformation models and benchmark matrices in `src/models/synthetic_data.py`
-  - `[x]` Integrate synthetic `/synthetic/generate` and `/synthetic/benchmark` routes in `main.py`
-  - `[x]` Extend the dashboard UI with a Synthetic generator options panel and side-by-side viewports in `src/templates/index.html`
-  - `[x]` Create unit tests in `tests/test_synthetic.py`
+- `[x]` **Experiment Tracking & Reproducibility Suite Implementation**
+  - `[x]` Implement tracking wrappers and JSON log writers in `src/evaluation/tracker.py`
+  - `[x]` Integrate tracker `/tracker/run` and `/tracker/logs` routes in `main.py`
+  - `[x]` Extend the dashboard UI with a Tracker console, telemetry indicators, and run history tables in `src/templates/index.html`
+  - `[x]` Create unit tests in `tests/test_tracker.py`

@@ -27,6 +27,7 @@ from src.models.ocr_research import OCRResearchManager
 from src.evaluation.experiments_framework import ExperimentRegistry
 from src.models.failure_lab import FailureClassifier, ExplainabilityEngine
 from src.models.synthetic_data import SyntheticDataEngine
+from src.evaluation.tracker import ExperimentTracker
 
 app = FastAPI(
     title="IdentityGuardian AI API",
@@ -578,4 +579,42 @@ def get_synthetic_benchmark():
         return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Synthetic Benchmarking Error: {str(e)}")
+
+# Experiment Tracker Setup
+experiment_tracker = ExperimentTracker()
+
+class TrackerRunPayload(BaseModel):
+    model_name: str
+    method: str
+    learning_rate: float
+    epochs: int
+    lora_r: int
+    lora_alpha: int
+    dataset_version: str
+    metrics: Dict[str, float]
+
+@app.post("/tracker/run")
+def log_tracker_run(payload: TrackerRunPayload):
+    try:
+        res = experiment_tracker.log_run(
+            model_name=payload.model_name,
+            method=payload.method,
+            learning_rate=payload.learning_rate,
+            epochs=payload.epochs,
+            lora_r=payload.lora_r,
+            lora_alpha=payload.lora_alpha,
+            dataset_version=payload.dataset_version,
+            metrics=payload.metrics
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Experiment Tracker Logging Error: {str(e)}")
+
+@app.get("/tracker/logs")
+def get_tracker_logs():
+    try:
+        runs = experiment_tracker.get_all_runs()
+        return {"runs": runs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Experiment Tracker Retrieve Error: {str(e)}")
 

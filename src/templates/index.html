@@ -155,14 +155,14 @@
 
         .tab-btn-container {
             display: flex;
-            gap: 6px;
+            gap: 4px;
         }
 
         .tab-btn {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.1);
             color: var(--text-sub);
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: 600;
@@ -726,6 +726,7 @@
             <button class="tab-btn" id="tab-btn-experiments" onclick="switchTab('experiments')">Research Experiments</button>
             <button class="tab-btn" id="tab-btn-failure" onclick="switchTab('failure')">Failure & Explainability Lab</button>
             <button class="tab-btn" id="tab-btn-synthetic" onclick="switchTab('synthetic')">Synthetic Data Generator</button>
+            <button class="tab-btn" id="tab-btn-tracker" onclick="switchTab('tracker')">Experiment Tracker</button>
         </div>
 
         <button class="logout-btn" onclick="handleLogout()">Exit Node</button>
@@ -1096,7 +1097,7 @@
                         <option value="Qwen2-VL">Qwen2-VL (Spatial/Autoregressive)</option>
                         <option value="Florence-2" selected>Florence-2 (Task-Grounding/Grounding)</option>
                         <option value="Donut">Donut (OCR-Free Transformer)</option>
-                        <option value="LayoutLMv3">LayoutLMv3(Layout-Aware Encoder)</option>
+                        <option value="LayoutLMv3">LayoutLMv3 (Layout-Aware Encoder)</option>
                         <option value="LLaVA">LLaVA (General Instruct VLM)</option>
                         <option value="DocOwl">DocOwl (Document-Optimized VLM)</option>
                     </select>
@@ -1720,6 +1721,156 @@
         </div>
     </div>
 
+    <!-- Tab 8: Experiment Tracker -->
+    <div id="tab-content-tracker" class="tab-content-wrapper" style="display: none;">
+        <div class="container">
+            <!-- Left Side: Simulator and Live Metrics -->
+            <div class="card">
+                <div class="card-title">⚙️ Track Hyperparameters & Telemetry</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Log active parameters to MLflow, Weights & Biases, and local TensorBoard writers.
+                </div>
+
+                <div class="upload-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="input-group">
+                        <label for="track-in-model">Target Architecture</label>
+                        <select id="track-in-model" class="search-input" style="width: 100%; border-radius: 8px;">
+                            <option value="Florence-2">Florence-2</option>
+                            <option value="Qwen2-VL">Qwen2-VL</option>
+                            <option value="LayoutLMv3">LayoutLMv3</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="track-in-method">PEFT Method</label>
+                        <select id="track-in-method" class="search-input" style="width: 100%; border-radius: 8px;">
+                            <option value="LoRA Adapter">LoRA Adapter</option>
+                            <option value="QLoRA">QLoRA</option>
+                            <option value="Full SFT">Full SFT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="upload-grid" style="grid-template-columns: 1fr 1fr 1.2fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="input-group">
+                        <label for="track-in-rank">LoRA Rank</label>
+                        <input type="number" id="track-in-rank" class="search-input" value="16" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="track-in-alpha">LoRA Alpha</label>
+                        <input type="number" id="track-in-alpha" class="search-input" value="32" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="track-in-dataset">Dataset Tag</label>
+                        <input type="text" id="track-in-dataset" class="search-input" value="v1.2.5-prod" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="upload-grid" style="grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="input-group">
+                        <label for="track-in-lr">Learning Rate</label>
+                        <input type="number" id="track-in-lr" class="search-input" value="0.0003" step="0.00005" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="track-in-epochs">Epochs</label>
+                        <input type="number" id="track-in-epochs" class="search-input" value="5" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="track-in-vram">Peak VRAM (GB)</label>
+                        <input type="number" id="track-in-vram" class="search-input" value="7.8" step="0.1" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="upload-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="input-group">
+                        <label for="track-in-acc">Accuracy</label>
+                        <input type="number" id="track-in-acc" class="search-input" value="0.971" step="0.005" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="track-in-f1">F1-Score</label>
+                        <input type="number" id="track-in-f1" class="search-input" value="0.965" step="0.005" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="track-in-time">Duration (s)</label>
+                        <input type="number" id="track-in-time" class="search-input" value="320" style="width: 100%;">
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="commitTrackerRun()" style="background: linear-gradient(135deg, #00e676, #00b0ff)">Commit Telemetry Run</button>
+                <div id="tracker-loader" class="loader"></div>
+            </div>
+
+            <!-- Right Side: Active status dashboard and portal endpoints -->
+            <div class="card">
+                <div class="card-title">🖥️ Active Logging Run Dashboard</div>
+                
+                <div class="dashboard-grid" style="margin-top: 0; margin-bottom: 25px;">
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 11px; color: var(--text-sub)">ACTIVE MODEL</div>
+                        <div id="track-active-model" style="font-size: 15px; font-weight: 700; color: var(--primary); margin-top: 4px;">--</div>
+                        <div id="track-active-method" style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">--</div>
+                    </div>
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 11px; color: var(--text-sub)">DATASET VERSION</div>
+                        <div id="track-active-dataset" style="font-size: 15px; font-weight: 700; color: var(--success); margin-top: 4px;">--</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" style="margin-top: 0; margin-bottom: 25px; grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="card" style="padding: 12px; background: rgba(0,0,0,0.15); border: none;">
+                        <div style="font-size: 10px; color: var(--text-sub)">LEARNING RATE</div>
+                        <div id="track-active-lr" style="font-size: 13px; font-weight: 700; margin-top: 4px;">--</div>
+                    </div>
+                    <div class="card" style="padding: 12px; background: rgba(0,0,0,0.15); border: none;">
+                        <div style="font-size: 10px; color: var(--text-sub)">LORA RANK</div>
+                        <div id="track-active-rank" style="font-size: 13px; font-weight: 700; margin-top: 4px;">--</div>
+                    </div>
+                    <div class="card" style="padding: 12px; background: rgba(0,0,0,0.15); border: none;">
+                        <div style="font-size: 10px; color: var(--text-sub)">CONVERGED F1</div>
+                        <div id="track-active-f1" style="font-size: 13px; font-weight: 700; color: var(--success); margin-top: 4px;">--</div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 20px; background: rgba(0,0,0,0.15)">
+                    <div style="font-family: 'Outfit'; font-size: 14px; font-weight: 600; margin-bottom: 12px;">External Tracking Dashboards</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="http://localhost:5000" target="_blank" style="text-decoration: none; background: rgba(0, 188, 212, 0.1); border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">📈 OPEN MLFLOW UI</a>
+                        <a href="https://wandb.ai" target="_blank" style="text-decoration: none; background: rgba(255, 179, 0, 0.1); border: 1px solid #ffb300; color: #ffb300; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">📊 OPEN W&B SWEEPS</a>
+                        <a href="http://localhost:6006" target="_blank" style="text-decoration: none; background: rgba(255, 23, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">🔥 OPEN TENSORBOARD</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Log Table -->
+        <div class="container" style="grid-template-columns: 1fr; margin-top: 0;">
+            <div class="card">
+                <div class="card-title">📋 Experiment Run History Database</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    History table containing converged metrics and configurations. Telemetry is saved in local JSON runs directory.
+                </div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Run ID</th>
+                            <th>VLM Model</th>
+                            <th>PEFT Method</th>
+                            <th>LoRA Parameters</th>
+                            <th>Learning Rate</th>
+                            <th>Accuracy</th>
+                            <th>F1-Score</th>
+                            <th>VRAM Usage</th>
+                            <th>Train Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tracker-history-table-body">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         let activeLearningCounter = 0;
         let webcamStream = null;
@@ -1749,6 +1900,7 @@
             const btnExp = document.getElementById('tab-btn-experiments');
             const btnFail = document.getElementById('tab-btn-failure');
             const btnSyn = document.getElementById('tab-btn-synthetic');
+            const btnTrack = document.getElementById('tab-btn-tracker');
             
             const contentKyc = document.getElementById('tab-content-kyc');
             const contentGraph = document.getElementById('tab-content-graph');
@@ -1757,6 +1909,7 @@
             const contentExp = document.getElementById('tab-content-experiments');
             const contentFail = document.getElementById('tab-content-failure');
             const contentSyn = document.getElementById('tab-content-synthetic');
+            const contentTrack = document.getElementById('tab-content-tracker');
 
             // Deactivate all
             btnKyc.classList.remove('active');
@@ -1766,6 +1919,7 @@
             btnExp.classList.remove('active');
             btnFail.classList.remove('active');
             btnSyn.classList.remove('active');
+            btnTrack.classList.remove('active');
             contentKyc.style.display = 'none';
             contentGraph.style.display = 'none';
             contentVlm.style.display = 'none';
@@ -1773,6 +1927,7 @@
             contentExp.style.display = 'none';
             contentFail.style.display = 'none';
             contentSyn.style.display = 'none';
+            contentTrack.style.display = 'none';
 
             if (tab === 'kyc') {
                 btnKyc.classList.add('active');
@@ -1803,6 +1958,10 @@
                 btnSyn.classList.add('active');
                 contentSyn.style.display = 'block';
                 fetchSyntheticBenchmarks();
+            } else if (tab === 'tracker') {
+                btnTrack.classList.add('active');
+                contentTrack.style.display = 'block';
+                fetchTrackerRuns();
             }
         }
 
@@ -2960,6 +3119,98 @@
             } catch (err) {
                 console.error(err);
                 alert("Synthetic data generation failed: " + err.message);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // EXPERIMENT TRACKER CONTROLLERS
+        // ==========================================
+        async function fetchTrackerRuns() {
+            try {
+                const response = await fetch("/tracker/logs");
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('tracker-history-table-body');
+                tableBody.innerHTML = '';
+                
+                if (data.runs.length > 0) {
+                    // Update Active Telemetry Dashboard with latest run values
+                    const latest = data.runs[0];
+                    document.getElementById('track-active-model').innerText = latest.model_name;
+                    document.getElementById('track-active-method').innerText = latest.method;
+                    document.getElementById('track-active-dataset').innerText = latest.dataset_version;
+                    document.getElementById('track-active-lr').innerText = latest.hyperparameters.learning_rate;
+                    document.getElementById('track-active-rank').innerText = latest.hyperparameters.lora_rank;
+                    document.getElementById('track-active-f1').innerText = (latest.metrics.f1 * 100).toFixed(1) + "%";
+                }
+
+                data.runs.forEach(run => {
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td><small>${run.timestamp}</small></td>
+                            <td><span style="color: var(--primary); font-family: monospace;">${run.run_id}</span></td>
+                            <td><strong>${run.model_name}</strong></td>
+                            <td><small>${run.method}</small></td>
+                            <td><small>r=${run.hyperparameters.lora_rank}, α=${run.hyperparameters.lora_alpha}</small></td>
+                            <td><small>lr=${run.hyperparameters.learning_rate}</small></td>
+                            <td style="color: var(--success); font-weight: 600;">${(run.metrics.accuracy * 100).toFixed(1)}%</td>
+                            <td style="color: var(--success); font-weight: 600;">${(run.metrics.f1 * 100).toFixed(1)}%</td>
+                            <td>${run.metrics.gpu_memory_gb.toFixed(1)} GB</td>
+                            <td>${run.metrics.train_time.toFixed(0)}s</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Tracker logs fetch failed:", err);
+            }
+        }
+
+        async function commitTrackerRun() {
+            const modelName = document.getElementById('track-in-model').value;
+            const method = document.getElementById('track-in-method').value;
+            const dataset = document.getElementById('track-in-dataset').value;
+            const lr = parseFloat(document.getElementById('track-in-lr').value);
+            const epochs = parseInt(document.getElementById('track-in-epochs').value);
+            const rank = parseInt(document.getElementById('track-in-rank').value);
+            const alpha = parseInt(document.getElementById('track-in-alpha').value);
+            const f1 = parseFloat(document.getElementById('track-in-f1').value);
+            const acc = parseFloat(document.getElementById('track-in-acc').value);
+            const timeVal = parseFloat(document.getElementById('track-in-time').value);
+            const vram = parseFloat(document.getElementById('track-in-vram').value);
+
+            const loader = document.getElementById('tracker-loader');
+            loader.style.display = 'block';
+
+            const requestPayload = {
+                model_name: modelName,
+                method: method,
+                learning_rate: lr,
+                epochs: epochs,
+                lora_r: rank,
+                lora_alpha: alpha,
+                dataset_version: dataset,
+                metrics: {
+                    accuracy: acc,
+                    f1: f1,
+                    train_time: timeVal,
+                    gpu_memory_gb: vram
+                }
+            };
+
+            try {
+                const response = await fetch("/tracker/run", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestPayload)
+                });
+                if (response.ok) {
+                    await fetchTrackerRuns();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Logging run failed.");
             } finally {
                 loader.style.display = 'none';
             }
