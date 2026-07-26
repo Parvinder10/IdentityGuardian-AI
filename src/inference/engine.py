@@ -281,28 +281,32 @@ class MultimodalVerificationEngine:
             ]
             
             for idx, t in enumerate(texts):
-                lower_t = t.lower()
+                lower_t = t.lower().strip()
                 if "name" in lower_t or "surname" in lower_t or "given" in lower_t or lower_t == "to":
-                    if idx + 1 < len(texts) and not any(c.isdigit() for c in texts[idx + 1]) and not any(char in texts[idx+1] for char in [":", "/", ","]):
-                        candidate_name = texts[idx + 1].strip()
-                        # If the immediate next is Hindi (non-ASCII), look one line further down
-                        if not candidate_name.isascii() and idx + 2 < len(texts):
-                            candidate_name = texts[idx + 2].strip()
-                        if len(candidate_name.split()) >= 2:
-                            extracted_data["name"] = candidate_name
-                            break
+                    # Check next 3 lines to find the first valid alphabetic name
+                    for offset in [1, 2, 3]:
+                        if idx + offset < len(texts):
+                            candidate_name = texts[idx + offset].strip()
+                            # Check if the name consists only of English letters and spaces
+                            if re.match(r'^[A-Za-z\s]{3,35}$', candidate_name):
+                                if len(candidate_name.split()) >= 2 and len(candidate_name.split()) <= 5:
+                                    lower_cand = candidate_name.lower()
+                                    if not any(k in lower_cand for k in ignored_keywords):
+                                        extracted_data["name"] = candidate_name
+                                        break
+                    if extracted_data["name"] != "Unknown":
+                        break
             else:
                 candidate_names = []
                 for t in texts:
                     clean_t = t.strip()
-                    # Skip if contains digits, punctuation colons/slashes/commas or is empty
-                    if not any(c.isdigit() for c in clean_t) and not any(char in clean_t for char in [":", "/", ","]) and len(clean_t) >= 3:
+                    # A valid English candidate name must only consist of alphabetic words and spaces
+                    if re.match(r'^[A-Za-z\s]{3,35}$', clean_t):
                         # Skip if matches any ignored keywords
                         lower_t = clean_t.lower()
                         if not any(k in lower_t for k in ignored_keywords):
-                            # Must consist of alphabetic words
                             words = clean_t.split()
-                            if len(words) >= 2 and len(words) <= 4:
+                            if len(words) >= 2 and len(words) <= 5:
                                 candidate_names.append(clean_t)
                 if candidate_names:
                     extracted_data["name"] = candidate_names[0]
