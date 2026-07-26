@@ -1,7 +1,7 @@
-# Task Checklist - Experiment Tracker
+# Task Checklist - Distributed Optimizer
 
-- `[x]` **Experiment Tracking & Reproducibility Suite Implementation**
-  - `[x]` Implement tracking wrappers and JSON log writers in `src/evaluation/tracker.py`
-  - `[x]` Integrate tracker `/tracker/run` and `/tracker/logs` routes in `main.py`
-  - `[x]` Extend the dashboard UI with a Tracker console, telemetry indicators, and run history tables in `src/templates/index.html`
-  - `[x]` Create unit tests in `tests/test_tracker.py`
+- `[x]` **Distributed Training & Optimization Center Implementation**
+  - `[x]` Implement distributed training launchers and inference compilers in `src/models/optimizer.py`
+  - `[x]` Integrate optimizer `/optimizer/configure` and `/optimizer/benchmark` routes in `main.py`
+  - `[x]` Extend the dashboard UI with a Distributed settings console, launch command visualizer, and acceleration tables in `src/templates/index.html`
+  - `[x]` Create unit tests in `tests/test_optimizer.py`

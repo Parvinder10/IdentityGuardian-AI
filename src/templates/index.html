@@ -132,7 +132,7 @@
 
         /* Dashboard Header */
         header {
-            padding: 20px 30px;
+            padding: 20px 25px;
             border-bottom: 1px solid var(--border-color);
             background: rgba(11, 17, 30, 0.8);
             backdrop-filter: blur(12px);
@@ -146,7 +146,7 @@
 
         .header-logo {
             font-family: 'Outfit', sans-serif;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 800;
             background: linear-gradient(135deg, var(--primary), #00e676);
             -webkit-background-clip: text;
@@ -162,9 +162,9 @@
             background: transparent;
             border: 1px solid rgba(255,255,255,0.1);
             color: var(--text-sub);
-            padding: 5px 8px;
+            padding: 4px 6px;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -242,9 +242,9 @@
         .logout-btn {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.15);
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 11px;
             cursor: pointer;
             color: var(--text-sub);
             box-shadow: none;
@@ -727,6 +727,7 @@
             <button class="tab-btn" id="tab-btn-failure" onclick="switchTab('failure')">Failure & Explainability Lab</button>
             <button class="tab-btn" id="tab-btn-synthetic" onclick="switchTab('synthetic')">Synthetic Data Generator</button>
             <button class="tab-btn" id="tab-btn-tracker" onclick="switchTab('tracker')">Experiment Tracker</button>
+            <button class="tab-btn" id="tab-btn-optimizer" onclick="switchTab('optimizer')">Distributed Optimization</button>
         </div>
 
         <button class="logout-btn" onclick="handleLogout()">Exit Node</button>
@@ -1846,7 +1847,7 @@
             <div class="card">
                 <div class="card-title">📋 Experiment Run History Database</div>
                 <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
-                    History table containing converged metrics and configurations. Telemetry is saved in local JSON runs directory.
+                    History table containing converged metrics and configurations. Telemetry is saved in local runs directory.
                 </div>
                 <table class="results-table">
                     <thead>
@@ -1864,6 +1865,100 @@
                         </tr>
                     </thead>
                     <tbody id="tracker-history-table-body">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 9: Distributed Optimization -->
+    <div id="tab-content-optimizer" class="tab-content-wrapper" style="display: none;">
+        <div class="container">
+            <!-- Left Side: Configurator and Command Visualizer -->
+            <div class="card">
+                <div class="card-title">⚙️ Distributed Launch Parameters</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Generate launcher directives for Hugging Face Accelerate, DeepSpeed, and FSDP scaling.
+                </div>
+                
+                <div class="upload-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="input-group">
+                        <label for="opt-deepspeed">DeepSpeed ZeRO Stage</label>
+                        <select id="opt-deepspeed" class="search-input" onchange="runOptimizerConfiguration()" style="width: 100%; border-radius: 8px;">
+                            <option value="None">None (Standard DDP)</option>
+                            <option value="ZeRO-1">ZeRO Stage 1 (Optimizer partition)</option>
+                            <option value="ZeRO-2" selected>ZeRO Stage 2 (Gradient partition)</option>
+                            <option value="ZeRO-3">ZeRO Stage 3 (Parameter partition)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="opt-fsdp">FSDP Strategy</label>
+                        <select id="opt-fsdp" class="search-input" onchange="runOptimizerConfiguration()" style="width: 100%; border-radius: 8px;">
+                            <option value="None" selected>None (Using DeepSpeed)</option>
+                            <option value="FULL_SHARD">FULL_SHARD Strategy</option>
+                            <option value="SHARD_GRAD_OP">SHARD_GRAD_OP Strategy</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="upload-grid" style="grid-template-columns: 1.2fr 1.2fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="input-group">
+                        <label for="opt-precision">Mixed Precision</label>
+                        <select id="opt-precision" class="search-input" onchange="runOptimizerConfiguration()" style="width: 100%; border-radius: 8px;">
+                            <option value="None">FP32 (None)</option>
+                            <option value="FP16" selected>FP16 Precision</option>
+                            <option value="BF16">BF16 Precision</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-top: 15px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                            <input type="checkbox" id="opt-gradcheck" onchange="runOptimizerConfiguration()" checked> Gradient Checkpointing
+                        </label>
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="runOptimizerConfiguration()" style="background: linear-gradient(135deg, #00e676, #00b0ff)">Generate Distributed Configurations</button>
+                <div id="opt-loader" class="loader"></div>
+
+                <!-- NCCL Commands block -->
+                <div class="card" style="margin-top: 25px; padding: 15px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 10px; color: var(--primary); font-family: monospace; font-weight: bold; margin-bottom: 8px;">NCCL LAUNCHER DIRECTIVE</div>
+                    <pre id="opt-launcher-cmd" style="font-family: monospace; font-size: 11px; color: #a2b4cd; white-space: pre-wrap; word-break: break-all;">Awaiting generation...</pre>
+                </div>
+            </div>
+
+            <!-- Right Side: DeepSpeed JSON config -->
+            <div class="card">
+                <div class="card-title">📄 Auto-Generated DeepSpeed Config</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    DeepSpeed configuration block exported dynamically to <code>deepspeed_config.json</code>.
+                </div>
+                
+                <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                    <pre id="opt-deepspeed-json" style="font-family: monospace; font-size: 11px; color: #a2b4cd; max-height: 280px; overflow-y: auto;">Awaiting generation...</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmarking Table -->
+        <div class="container" style="grid-template-columns: 1fr; margin-top: 0;">
+            <div class="card">
+                <div class="card-title">📊 Inference Acceleration & Quantization Telemetry</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Comparative metrics showing compiler configurations (Torch Compile, ONNX Runtime, TensorRT) against baseline models.
+                </div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Configuration Option</th>
+                            <th>Inference Latency</th>
+                            <th>System Throughput</th>
+                            <th>Peak Memory (VRAM)</th>
+                            <th>Est. Cost (per 10k transactions)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="opt-benchmarks-table-body">
                         <!-- Loaded dynamically -->
                     </tbody>
                 </table>
@@ -1901,6 +1996,7 @@
             const btnFail = document.getElementById('tab-btn-failure');
             const btnSyn = document.getElementById('tab-btn-synthetic');
             const btnTrack = document.getElementById('tab-btn-tracker');
+            const btnOpt = document.getElementById('tab-btn-optimizer');
             
             const contentKyc = document.getElementById('tab-content-kyc');
             const contentGraph = document.getElementById('tab-content-graph');
@@ -1910,6 +2006,7 @@
             const contentFail = document.getElementById('tab-content-failure');
             const contentSyn = document.getElementById('tab-content-synthetic');
             const contentTrack = document.getElementById('tab-content-tracker');
+            const contentOpt = document.getElementById('tab-content-optimizer');
 
             // Deactivate all
             btnKyc.classList.remove('active');
@@ -1920,6 +2017,7 @@
             btnFail.classList.remove('active');
             btnSyn.classList.remove('active');
             btnTrack.classList.remove('active');
+            btnOpt.classList.remove('active');
             contentKyc.style.display = 'none';
             contentGraph.style.display = 'none';
             contentVlm.style.display = 'none';
@@ -1928,6 +2026,7 @@
             contentFail.style.display = 'none';
             contentSyn.style.display = 'none';
             contentTrack.style.display = 'none';
+            contentOpt.style.display = 'none';
 
             if (tab === 'kyc') {
                 btnKyc.classList.add('active');
@@ -1962,6 +2061,11 @@
                 btnTrack.classList.add('active');
                 contentTrack.style.display = 'block';
                 fetchTrackerRuns();
+            } else if (tab === 'optimizer') {
+                btnOpt.classList.add('active');
+                contentOpt.style.display = 'block';
+                fetchOptimizerBenchmarks();
+                runOptimizerConfiguration();
             }
         }
 
@@ -3213,6 +3317,74 @@
                 alert("Logging run failed.");
             } finally {
                 loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // EXPERIMENT OPTIMIZER CONTROLLERS
+        // ==========================================
+        async function fetchOptimizerBenchmarks() {
+            try {
+                const response = await fetch("/optimizer/benchmark");
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('opt-benchmarks-table-body');
+                tableBody.innerHTML = '';
+                
+                data.metrics.forEach(m => {
+                    const rowClass = m.config.includes('TensorRT') ? 'style="color: var(--success); font-weight: 700;"' : m.config.includes('ONNX') || m.config.includes('INT8') ? 'style="color: var(--primary);"' : '';
+                    tableBody.innerHTML += `
+                        <tr ${rowClass}>
+                            <td><strong>${m.config}</strong></td>
+                            <td>${m.latency_ms.toFixed(0)} ms</td>
+                            <td><strong>${m.throughput_fps.toFixed(1)} fps</strong></td>
+                            <td>${m.vram_gb.toFixed(1)} GB</td>
+                            <td>$${m.cost_index.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Optimizer benchmarks fetch failed:", err);
+            }
+        }
+
+        async function runOptimizerConfiguration() {
+            const zero = document.getElementById('opt-deepspeed').value;
+            const fsdp = document.getElementById('opt-fsdp').value;
+            const mp = document.getElementById('opt-precision').value;
+            const gc = document.getElementById('opt-gradcheck').checked;
+
+            const loader = document.getElementById('opt-loader');
+            if (loader) loader.style.display = 'block';
+
+            const requestPayload = {
+                zero_stage: zero,
+                fsdp_strategy: fsdp,
+                mixed_precision: mp,
+                gradient_checkpointing: gc
+            };
+
+            try {
+                const response = await fetch("/optimizer/configure", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestPayload)
+                });
+                const res = await response.json();
+                
+                // Render NCCL commands and launch command
+                let envHtml = '';
+                for (const [k, v] of Object.entries(res.env_variables)) {
+                    envHtml += `export ${k}=${v}\n`;
+                }
+                
+                document.getElementById('opt-launcher-cmd').innerText = envHtml + res.launcher_command;
+                document.getElementById('opt-deepspeed-json').innerText = JSON.stringify(res.deepspeed_config, null, 4);
+                
+            } catch (err) {
+                console.error(err);
+            } finally {
+                if (loader) loader.style.display = 'none';
             }
         }
     </script>

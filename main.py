@@ -28,6 +28,7 @@ from src.evaluation.experiments_framework import ExperimentRegistry
 from src.models.failure_lab import FailureClassifier, ExplainabilityEngine
 from src.models.synthetic_data import SyntheticDataEngine
 from src.evaluation.tracker import ExperimentTracker
+from src.models.optimizer import DistributedTrainingManager, InferenceCompiler
 
 app = FastAPI(
     title="IdentityGuardian AI API",
@@ -617,4 +618,35 @@ def get_tracker_logs():
         return {"runs": runs}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Experiment Tracker Retrieve Error: {str(e)}")
+
+# Optimizer Setup
+distributed_training_manager = DistributedTrainingManager()
+inference_compiler = InferenceCompiler()
+
+class OptimizerConfigurePayload(BaseModel):
+    zero_stage: str
+    fsdp_strategy: str
+    mixed_precision: str
+    gradient_checkpointing: bool
+
+@app.post("/optimizer/configure")
+def configure_optimizer(payload: OptimizerConfigurePayload):
+    try:
+        res = distributed_training_manager.generate_launcher_config(
+            zero_stage=payload.zero_stage,
+            fsdp_strategy=payload.fsdp_strategy,
+            mixed_precision=payload.mixed_precision,
+            gradient_checkpointing=payload.gradient_checkpointing
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Optimizer Configuration Error: {str(e)}")
+
+@app.get("/optimizer/benchmark")
+def get_optimizer_benchmark():
+    try:
+        res = inference_compiler.get_inference_benchmarks()
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Optimizer Benchmarking Error: {str(e)}")
 
