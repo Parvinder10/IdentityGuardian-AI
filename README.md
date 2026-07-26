@@ -1,75 +1,89 @@
-# IdentityGuardian AI: Self-Evolving Multimodal Identity Verification Platform
+# 🛡️ IdentityGuardian AI: Self-Healing Adaptive KYC Node
 
-[![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+IdentityGuardian AI is an academic research platform for Know-Your-Customer (KYC) identity verification, optical character recognition (OCR), multi-agent fraud graph networks, and Vision-Language Model (VLM) parameter-efficient adapters.
 
-IdentityGuardian AI is a research-grade, production-ready identity verification (KYC) platform. It provides document layout parsing, face matching (ID photo to webcam selfie), forgery checking (face swaps and text alterations), uncertainty calibration, and a continual learning engine to support self-evolving updates.
-
----
-
-## Technical Features
-1. **Multimodal Face Verification**: A Siamese network that extracts embeddings from the ID photo (located by the layout parser) and matches them against a webcam selfie crop using cosine similarity.
-2. **Identity Forgery Scan**: Identifies presentation attacks, including face-swap splices and localized text editing.
-3. **Calibrated Uncertainty**: Softmax temperature scaling and split conformal prediction intervals mapping biometrics verification margins to avoid false acceptances (FAR).
-4. **Self-Healing Fallbacks**: Automatically triggers visual enhancement (LANCZOS super-resolution, contrast scaling) and agent cross-validation checks when text sequence entropy exceeds confidence limits.
-5. **Self-Evolving Continual Learning**: Identifies borderline face matches via active learning and computes weight updates using Elastic Weight Consolidation (EWC) diagonal Fisher regularizations to prevent catastrophic forgetting.
+## 📖 Publications & Research Documentation
+- **Academic Research Draft**: Read the formal publication paper in [RESEARCH_PAPER.md](docs/RESEARCH_PAPER.md)
+- **Literature Review & Dataset Card**: Read the comprehensive VLM and Graph AML survey in [LITERATURE_REVIEW.md](docs/LITERATURE_REVIEW.md)
 
 ---
 
-## Repository Architecture
-```
-├── configs/                         # Configurations
-│   ├── data_config.yaml             # Identity synthesis parameters
-│   ├── model_config.yaml            # Hyperparameters for face, forgery, and layout nets
-│   └── train_config.yaml            # Continual learning configurations
-├── src/                             # Source Package
-│   ├── data/                        # ID generation and tampering simulations
-│   ├── models/                      # Siamese networks, EWC learner, and document parsers
-│   ├── inference/                   # Calibrations, conformal bounds, self-healing engine
-│   ├── retrieval/                   # Spatial chunking and Identity Knowledge Graphs
-│   ├── evaluation/                  # FAR/FRR metrics and benchmarks
-│   └── failure_analysis/            # Integrated Gradients and failure clustering
-├── tests/                           # Unit testing suite
-├── main.py                          # FastAPI endpoint router
-├── Dockerfile                       # Container deployment definition
-└── docker-compose.yml               # Service orchestrations (App, Redis, Prometheus)
+## 🛠️ Architecture Overview
+
+The system models the verification pipeline as an adaptive decision trail, dynamically routing files based on a joint trust score computed at runtime.
+
+```mermaid
+graph TD
+    A[Upload ID Card Scan] --> B[VLM Grounding OCR]
+    B --> C{OCR CER &gt; 15%?}
+    C -- Yes --> D[Trigger Self-Healing Contrast/Deskew]
+    C -- No --> E[Request Selfie Snapshot]
+    E --> F[Face Crop Cosine Matcher]
+    F --> G{Trust Score T &gt; 0.8?}
+    G -- Yes --> H[Approve Identity]
+    G -- No --> I[Trigger Multi-Agent Fraud Graph Check]
+    I --> J{Graph Anomalies Found?}
+    J -- Yes --> K[Reject Identity]
+    J -- No --> L[Escalate to Manual Compliance]
 ```
 
 ---
 
-## Installation & Setup
+## ⚙️ Setup & Reproducibility Guide
 
-### Local Setup
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Run pytest suite:
-   ```bash
-   pytest tests/
-   ```
+### 1. Installation
+Clone the repository and install all dependencies:
+```bash
+git clone https://github.com/Parvinder10/IdentityGuardian-AI.git
+cd IdentityGuardian-AI
+pip install -r requirements.txt
+```
 
-### Docker Deployment
-1. Build and boot the microservice stack:
-   ```bash
-   docker-compose up --build
-   ```
-2. The interactive API documentation will be available at `http://localhost:8000/docs`.
+### 2. Dataset Formats
+Ensure your layout grounding datasets are in JSON Lines formatting inside `./data/annotations.jsonl`:
+```json
+{"image": "id_001.png", "suffix": "<OD>", "label": "name [340, 210, 480, 520]"}
+{"image": "id_002.png", "suffix": "<OD>", "label": "dob [120, 220, 240, 410]"}
+```
+
+### 3. VLM Fine-Tuning Execution
+Run parameter-efficient LoRA SFT on open-weight VLMs:
+```bash
+python src/training/train_vlm.py \
+    --model_name "Florence-2" \
+    --peft_method "LoRA" \
+    --lr 0.0003 \
+    --epochs 5 \
+    --lora_r 16 \
+    --lora_alpha 32
+```
+
+### 4. Distributed Multi-GPU Training Launcher
+Launch scalable training sweeps using DeepSpeed ZeRO-2 optimization and gradient checkpointing:
+```bash
+accelerate launch \
+    --multi_gpu \
+    --mixed_precision fp16 \
+    --use_deepspeed \
+    --deepspeed_config_file ./deepspeed_config.json \
+    src/training/train_vlm.py \
+    --gradient_checkpointing
+```
+
+### 5. Running the Test Suite
+Execute the entire testing suite containing all 35 unit tests:
+```bash
+python -m pytest
+```
 
 ---
 
-## API Endpoints
+## 🔬 Technical Blog: Adapting Document Intelligence
 
-### 1. Multimodal Verification
-- **Endpoint**: `/verify` (POST)
-- **Parameters**: `id_card` (file), `selfie` (file)
-- **Response**: Extracted fields, face similarity score, FAR/FRR boundaries, forgery status, and active learning indicators.
+Modern KYC systems suffer from poor generalization because real-world document photos include shadows, rotations, and folds. 
 
-### 2. Feature Importance Visualizer
-- **Endpoint**: `/explain` (POST)
-- **Parameters**: `id_card` (file), `selfie` (file)
-- **Response**: Base64 encoded image overlay mapping pixel attributions computed via Integrated Gradients.
+### Resolving Shadows and Blur
+Rather than requesting users to restart their uploads (which triggers high drop-off rates), **IdentityGuardian AI** uses a self-healing cascade. When character extraction confidence scores drop below threshold boundaries, the pipeline triggers contrast-enhancing histograms (CLAHE) and Hough-line deskewers to recover correct bounding box spatial targets.
 
-### 3. Self-Evolving Training Step
-- **Endpoint**: `/continual_train` (POST)
-- **Response**: Model rehearsal status, loss, and EWC penalty metrics.
+### Tracking with W&B, MLflow, and TensorBoard
+Every training run is tracked across MLflow, Weights & Biases (W&B), and TensorBoard logs. In addition, runs are logged locally as structured JSON entries inside `./runs/` to guarantee reproducibility across different environments.

@@ -1,7 +1,6 @@
-# Task Checklist - Distributed Optimizer
+# Task Checklist - Research Documentation
 
-- `[x]` **Distributed Training & Optimization Center Implementation**
-  - `[x]` Implement distributed training launchers and inference compilers in `src/models/optimizer.py`
-  - `[x]` Integrate optimizer `/optimizer/configure` and `/optimizer/benchmark` routes in `main.py`
-  - `[x]` Extend the dashboard UI with a Distributed settings console, launch command visualizer, and acceleration tables in `src/templates/index.html`
-  - `[x]` Create unit tests in `tests/test_optimizer.py`
+- `[x]` **Research Documentation & GitHub presentation**
+  - `[x]` Write complete academic Research Paper draft, Model Card, and Ablation Study inside `docs/RESEARCH_PAPER.md`
+  - `[x]` Write Literature Review, Dataset Card, and Experiment Logs inside `docs/LITERATURE_REVIEW.md`
+  - `[x]` Update the main `README.md` with setup instructions, dataset formats, training/eval commands, architectural charts, and a technical blog section
