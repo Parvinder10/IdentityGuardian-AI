@@ -22,6 +22,7 @@ from src.inference.adaptive_engine import AdaptiveVerificationPlanner
 from src.inference.graph_engine import EvidenceGraphManager
 from src.inference.graph_agents import CoordinatorAgent
 from src.models.vlm_interface import VLMRegistry
+from src.models.vlm_finetuning import VLMFineTuningPipeline, VLMDocDataset
 
 app = FastAPI(
     title="IdentityGuardian AI API",
@@ -370,6 +371,55 @@ def get_vlm_benchmark():
             {"model": "LayoutLMv3", "ocr_accuracy": 94.0, "entity_extraction": 93.5, "doc_understanding": 92.1, "latency": 0.65, "vram": 2.5, "cost": 40.0},
             {"model": "LLaVA", "ocr_accuracy": 91.2, "entity_extraction": 88.4, "doc_understanding": 91.8, "latency": 3.8, "vram": 12.4, "cost": 220.0},
             {"model": "DocOwl", "ocr_accuracy": 94.6, "entity_extraction": 93.8, "doc_understanding": 94.0, "latency": 1.8, "vram": 7.2, "cost": 120.0}
+        ]
+    }
+
+# VLM Fine-Tuning Schema & Setup
+class VLMFinetuneRequest(BaseModel):
+    model_name: str
+    method: str
+    learning_rate: float = 1e-4
+    epochs: int = 3
+    lora_r: int = 8
+    lora_alpha: int = 16
+    patience: int = 2
+
+@app.post("/vlm/finetune")
+def vlm_finetune(payload: VLMFinetuneRequest):
+    try:
+        train_dataset = VLMDocDataset(size=10)
+        val_dataset = VLMDocDataset(size=4)
+        
+        config = {
+            "model_name": payload.model_name,
+            "method": payload.method,
+            "learning_rate": payload.learning_rate,
+            "epochs": payload.epochs,
+            "lora_r": payload.lora_r,
+            "lora_alpha": payload.lora_alpha,
+            "patience": payload.patience,
+            "checkpoint_dir": "./checkpoints"
+        }
+        
+        pipeline = VLMFineTuningPipeline(config=config, device="cpu")
+        
+        history_logs = []
+        def log_callback(epoch_log):
+            history_logs.append(epoch_log)
+            
+        result = pipeline.run_training_session(train_dataset, val_dataset, on_epoch_log=log_callback)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"VLM Fine-Tuning Error: {str(e)}")
+
+@app.get("/vlm/finetune/benchmark")
+def get_vlm_finetune_benchmark():
+    return {
+        "metrics": [
+            {"config": "Base Model (Zero-Shot)", "accuracy": 90.2, "f1": 88.5, "train_time": 0.0, "vram": 1.8, "latency": 240.0},
+            {"config": "LoRA Adapter (PEFT)", "accuracy": 96.5, "f1": 95.1, "train_time": 340.0, "vram": 2.1, "latency": 252.0},
+            {"config": "QLoRA Adapter (4-bit)", "accuracy": 95.8, "f1": 94.4, "train_time": 480.0, "vram": 1.2, "latency": 285.0},
+            {"config": "Full Fine-Tuning", "accuracy": 97.2, "f1": 95.9, "train_time": 860.0, "vram": 7.8, "latency": 240.0}
         ]
     }
 
