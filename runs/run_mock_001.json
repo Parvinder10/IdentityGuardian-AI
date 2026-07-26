@@ -1,0 +1,19 @@
+{
+    "run_id": "run_mock_001",
+    "timestamp": "2026-07-26 15:40:12",
+    "dataset_version": "v1.2.0-clean",
+    "model_name": "Florence-2",
+    "method": "LoRA Adapter",
+    "hyperparameters": {
+        "learning_rate": 0.0002,
+        "epochs": 5,
+        "lora_rank": 8,
+        "lora_alpha": 16
+    },
+    "metrics": {
+        "accuracy": 0.942,
+        "f1": 0.938,
+        "train_time": 425.0,
+        "gpu_memory_gb": 6.8
+    }
+}

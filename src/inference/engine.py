@@ -129,7 +129,13 @@ class MultimodalVerificationEngine:
             gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
             cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
             face_cascade = cv2.CascadeClassifier(cascade_path)
-            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3, minSize=(40, 40))
+            
+            # Primary search
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3, minSize=(30, 30))
+            
+            # Secondary robust fallback search for small/low-res icons
+            if len(faces) == 0:
+                faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=1, minSize=(15, 15))
             
             if len(faces) > 0:
                 # Take the first face detected by Haar Cascade
@@ -233,21 +239,30 @@ class MultimodalVerificationEngine:
                     extracted_data["dob"] = match.group(0)
                     break
                     
-            # 2. Extract ID Number using regex or alphanumeric lengths
-            id_regex = re.compile(r'\b[A-Z0-9]{3,4}-[A-Z0-9]{2,3}-[A-Z0-9]{4}\b|\b[A-Z0-9]{8,15}\b')
+            # 2. Prioritize Aadhaar space-separated numbers
+            aadhaar_regex = re.compile(r'\b\d{4}\s\d{4}\s\d{4}\b|\b\d{12}\b')
             for t in texts:
-                if t == extracted_data["dob"]:
-                    continue
-                match = id_regex.search(t)
+                match = aadhaar_regex.search(t)
                 if match:
                     extracted_data["id_number"] = match.group(0)
                     break
-            else:
+
+            # Fallback to general ID patterns
+            if extracted_data["id_number"] == "Unknown":
+                id_regex = re.compile(r'\b[A-Z0-9]{3,4}-[A-Z0-9]{2,3}-[A-Z0-9]{4}\b|\b(?=.*\d)[A-Z0-9]{8,15}\b')
                 for t in texts:
-                    clean_t = re.sub(r'[^A-Z0-9]', '', t.upper())
-                    if len(clean_t) >= 6 and any(c.isdigit() for c in clean_t) and not date_regex.search(t):
-                        extracted_data["id_number"] = t
+                    if t == extracted_data["dob"]:
+                        continue
+                    match = id_regex.search(t)
+                    if match:
+                        extracted_data["id_number"] = match.group(0)
                         break
+                else:
+                    for t in texts:
+                        clean_t = re.sub(r'[^A-Z0-9]', '', t.upper())
+                        if len(clean_t) >= 6 and any(c.isdigit() for c in clean_t) and not date_regex.search(t):
+                            extracted_data["id_number"] = t
+                            break
                     
             # 3. Extract Name using broad exclusions to isolate the candidate
             ignored_keywords = [
@@ -258,21 +273,30 @@ class MultimodalVerificationEngine:
                 "nptel", "online", "certification", "certificate", "course", "completed",
                 "awarded", "consolidated", "score", "elite", "iit", "ministry", "education",
                 "national", "programme", "technology", "enhanced", "learning", "successfully",
-                "this", "to", "for", "passing", "test", "verification", "portal", "profile"
+                "this", "to", "for", "passing", "test", "verification", "portal", "profile",
+                "government of india", "government of", "unique identification", "authority of india",
+                "authority", "enrollment", "enrolment", "enrolment no", "enrolment no.",
+                "vtc", "c/o", "h.no", "sainik", "enclave", "crpf", "pin code", "pin", "mobile",
+                "vid", "aadhaar", "no.", "no", "information", "help", "email"
             ]
             
             for idx, t in enumerate(texts):
                 lower_t = t.lower()
-                if "name" in lower_t or "surname" in lower_t or "given" in lower_t:
-                    if idx + 1 < len(texts) and not any(c.isdigit() for c in texts[idx + 1]):
-                        extracted_data["name"] = texts[idx + 1]
-                        break
+                if "name" in lower_t or "surname" in lower_t or "given" in lower_t or lower_t == "to":
+                    if idx + 1 < len(texts) and not any(c.isdigit() for c in texts[idx + 1]) and not any(char in texts[idx+1] for char in [":", "/", ","]):
+                        candidate_name = texts[idx + 1].strip()
+                        # If the immediate next is Hindi (non-ASCII), look one line further down
+                        if not candidate_name.isascii() and idx + 2 < len(texts):
+                            candidate_name = texts[idx + 2].strip()
+                        if len(candidate_name.split()) >= 2:
+                            extracted_data["name"] = candidate_name
+                            break
             else:
                 candidate_names = []
                 for t in texts:
                     clean_t = t.strip()
-                    # Skip if contains digits or is empty
-                    if not any(c.isdigit() for c in clean_t) and len(clean_t) >= 3:
+                    # Skip if contains digits, punctuation colons/slashes/commas or is empty
+                    if not any(c.isdigit() for c in clean_t) and not any(char in clean_t for char in [":", "/", ","]) and len(clean_t) >= 3:
                         # Skip if matches any ignored keywords
                         lower_t = clean_t.lower()
                         if not any(k in lower_t for k in ignored_keywords):

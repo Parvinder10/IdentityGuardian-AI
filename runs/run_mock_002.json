@@ -1,0 +1,19 @@
+{
+    "run_id": "run_mock_002",
+    "timestamp": "2026-07-26 12:22:45",
+    "dataset_version": "v1.2.0-clean",
+    "model_name": "Qwen2-VL",
+    "method": "QLoRA",
+    "hyperparameters": {
+        "learning_rate": 0.0001,
+        "epochs": 3,
+        "lora_rank": 16,
+        "lora_alpha": 32
+    },
+    "metrics": {
+        "accuracy": 0.961,
+        "f1": 0.958,
+        "train_time": 880.0,
+        "gpu_memory_gb": 9.4
+    }
+}
