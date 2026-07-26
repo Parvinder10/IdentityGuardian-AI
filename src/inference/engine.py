@@ -212,6 +212,8 @@ class MultimodalVerificationEngine:
             ocr_results = self.ocr_reader.readtext(np.array(id_image))
             texts = [res[1].strip() for res in ocr_results]
             print(f"[OCR] Extracted raw texts: {texts}")
+            with open("ocr_raw_output.txt", "w", encoding="utf-8") as f:
+                f.write("\n".join(texts))
         except Exception as e:
             print(f"[OCR] EasyOCR failed: {str(e)}")
             texts = []
