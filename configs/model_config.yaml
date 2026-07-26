@@ -1,0 +1,43 @@
+# IdentityGuardian AI: Neural Network Configurations
+
+document_parser:
+  backbone: "vit_base"
+  patch_size: 16
+  embed_dim: 256
+  num_heads: 8
+  depth: 4
+  num_classes: 4  # Name, ID_Number, DOB, Profile_Photo
+  learning_rate: 0.001
+
+face_verifier:
+  backbone: "resnet18"
+  embedding_dim: 128
+  margin: 0.6  # Cosine matching threshold
+  learning_rate: 0.0003
+
+forgery_detector:
+  embedding_dim: 128
+  margin: 1.0
+  tamper_threshold: 0.5
+
+continual_learner:
+  ewc_lambda: 400.0  # Fisher information weight constraint
+  memory_buffer_size: 100 # Memory rehearsal samples
+
+vlm_finetuning:
+  base_model: "google/paligemma-3b-pt-448"
+  lora:
+    r: 16
+    alpha: 32
+    target_modules: ["q_proj", "v_proj"]
+    dropout: 0.05
+    bias: "none"
+  max_length: 256
+
+llm_finetuning:
+  base_model: "Qwen/Qwen2-1.5B-Instruct"
+  lora:
+    r: 8
+    alpha: 16
+    target_modules: ["q_proj", "v_proj"]
+    dropout: 0.05

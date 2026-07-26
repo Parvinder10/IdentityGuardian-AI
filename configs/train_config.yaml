@@ -1,0 +1,23 @@
+# IdentityGuardian AI: Training config
+training:
+  epochs: 20
+  batch_size: 16
+  grad_accumulation_steps: 2
+  precision: "16-mixed"
+  val_check_interval: 1.0
+
+optimizer:
+  type: "AdamW"
+  lr: 0.0003
+  weight_decay: 0.01
+
+continual_training:
+  rehearsal_batch_size: 8
+  finetune_epochs: 5
+  lr: 0.00005
+
+logging:
+  mlflow:
+    experiment_name: "identity_guardian_research"
+  tensorboard:
+    log_dir: "./runs/identity_guardian"

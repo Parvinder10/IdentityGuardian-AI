@@ -1,0 +1,34 @@
+# IdentityGuardian AI: Data and Tampering configuration
+generation:
+  num_train_samples: 1000
+  num_val_samples: 200
+  num_test_samples: 200
+  id_types:
+    - driver_license
+    - national_id
+    - passport
+  width: 600
+  height: 400  # standard landscape card ratio
+  seed: 42
+
+augmentations:
+  noise:
+    gaussian_variance_range: [0.001, 0.015]
+  blur:
+    kernel_size_range: [3, 7]
+  distortion:
+    perspective_warp_scale: 0.04
+    rotation_angle_range: [-10, 10]
+  illumination:
+    contrast_range: [0.8, 1.2]
+    brightness_range: [-20, 20]
+
+tampering:
+  face_swap_probability: 0.3      # Splicing an alien face onto the ID photo region
+  text_replacement_probability: 0.3 # Editing text fields (ID number, Name)
+  face_box_size: [120, 100]        # height, width of face crop on card
+  watermark_transparency: 0.15
+
+continual_learning:
+  active_learning_ratio: 0.15      # Fraction of low-confidence predictions to route to verification logs
+  drift_shift_scale: 0.2           # Visual distribution shift strength (simulating new camera sensor drift)

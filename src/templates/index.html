@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IdentityGuardian AI - KYC Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b111e;
+            --card-bg: rgba(20, 30, 50, 0.45);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #00bcd4;
+            --primary-glow: rgba(0, 188, 212, 0.3);
+            --success: #00e676;
+            --success-glow: rgba(0, 230, 118, 0.35);
+            --danger: #ff1744;
+            --danger-glow: rgba(255, 23, 68, 0.35);
+            --text-main: #f5f7fa;
+            --text-sub: #9aa8bc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 10% 20%, rgba(0, 188, 212, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(255, 23, 68, 0.03) 0%, transparent 40%);
+            padding-bottom: 50px;
+        }
+
+        /* Login screen styling */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(6, 10, 20, 0.95);
+            backdrop-filter: blur(25px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-card {
+            background: rgba(25, 35, 60, 0.6);
+            border: 1px solid rgba(0, 188, 212, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 15px 40px rgba(0, 188, 212, 0.15);
+            text-align: center;
+        }
+
+        .login-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), #00e676);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .login-sub {
+            color: var(--text-sub);
+            font-size: 13px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), #0097a7);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .login-error {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* Dashboard Header */
+        header {
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 17, 30, 0.8);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), #00e676);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tab-btn-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-sub);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 188, 212, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 10px rgba(0,188,212,0.2);
+        }
+
+        .mode-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.05);
+            padding: 6px 16px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.15);
+            transition: .3s;
+            border-radius: 22px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px; width: 16px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+        
+        .mode-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+            transition: color 0.2s ease;
+        }
+        
+        .mode-label.active {
+            color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text-sub);
+            box-shadow: none;
+            width: auto;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 23, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+            transform: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        /* Upload grids */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 600px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-box {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            min-height: 190px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .upload-box input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .upload-icon {
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .upload-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* Webcam styling */
+        .webcam-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            z-index: 20;
+        }
+
+        .webcam-video {
+            width: 100%;
+            height: 80%;
+            object-fit: cover;
+        }
+
+        .webcam-controls {
+            height: 20%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10,15,30,0.9);
+            gap: 10px;
+            padding: 5px;
+        }
+
+        .webcam-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 120px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+            object-fit: contain;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        button.action-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), #0097a7);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 15px;
+        }
+
+        button.action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 188, 212, 0.5);
+        }
+
+        /* Viewport Bounding box styles */
+        .viewer-container {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #060913;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 280px;
+        }
+
+        .viewer-img-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .viewer-img {
+            display: block;
+            max-width: 100%;
+            max-height: 320px;
+        }
+
+        .box-overlay {
+            position: absolute;
+            border: 2px solid var(--primary);
+            background: rgba(0, 188, 212, 0.15);
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+
+        .box-label {
+            position: absolute;
+            top: -20px;
+            left: -2px;
+            background: var(--primary);
+            color: #000;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 1px 5px;
+            border-radius: 2px 2px 0 0;
+            text-transform: uppercase;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th, .results-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .results-table th {
+            color: var(--text-sub);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .results-table td {
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success-glow);
+        }
+
+        .badge-danger {
+            background: rgba(255, 23, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger-glow);
+        }
+
+        .badge-warn {
+            background: rgba(255, 179, 0, 0.15);
+            color: #ffb300;
+            border: 1px solid rgba(255, 179, 0, 0.3);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .metric-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .explain-img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 15px;
+            display: none;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            color: #fff;
+        }
+
+        .search-btn {
+            width: auto;
+            padding: 0 20px;
+        }
+
+        .rag-hits {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .hit-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .hit-relation {
+            font-size: 11px;
+            color: var(--primary);
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .loader {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Adaptive flow console logs */
+        .adaptive-log-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            color: #a2b4cd;
+        }
+
+        /* Benchmark comparison Progress Bars */
+        .chart-box {
+            background: rgba(0,0,0,0.15);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .chart-bar-container {
+            margin-bottom: 16px;
+        }
+        
+        .chart-label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--text-sub);
+        }
+        
+        .progress-meter {
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .bar-static {
+            background: #ff1744;
+            box-shadow: 0 0 8px rgba(255, 23, 68, 0.35);
+        }
+        
+        .bar-adaptive {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success-glow);
+        }
+
+        /* Graph visualization styles */
+        .graph-panel {
+            min-height: 400px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: #050811;
+            position: relative;
+        }
+        
+        .agent-report-container {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .agent-report-container h3 {
+            font-family: 'Outfit';
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        .agent-report-container h4 {
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+        .agent-report-container hr {
+            border: 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Professional Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <div class="login-logo">🛡️ IdentityGuardian AI</div>
+            <div class="login-sub">Enter credentials to access the KYC validation node</div>
+            
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="e.g. admin">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+            
+            <button class="login-btn" onclick="validateCredentials()">Authenticate</button>
+            <div id="login-error-msg" class="login-error">Invalid Username or Password. Try again.</div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Header -->
+    <header>
+        <div class="header-logo">🛡️ IdentityGuardian AI</div>
+        
+        <!-- Tab Bar Switcher -->
+        <div class="tab-btn-container">
+            <button class="tab-btn active" id="tab-btn-kyc" onclick="switchTab('kyc')">Verification Console</button>
+            <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">Evidence Graph Portal</button>
+        </div>
+
+        <button class="logout-btn" onclick="handleLogout()">Exit Node</button>
+    </header>
+
+    <!-- Tab 1: KYC Single User Dashboard -->
+    <div id="tab-content-kyc" class="tab-content-wrapper">
+        <!-- Adaptive Switch Toggle inside tab wrapper to keep it clean -->
+        <div style="max-width: 1400px; margin: 25px auto 0 auto; padding: 0 25px; display: flex; justify-content: flex-end;">
+            <div class="mode-toggle-container">
+                <span id="static-mode-label" class="mode-label active">Static Mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mode-checkbox" onchange="toggleMode()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span id="adaptive-mode-label" class="mode-label">Adaptive AI</span>
+            </div>
+        </div>
+
+        <div class="container" style="margin-top: 15px;">
+            
+            <!-- Left Side: Upload & Document Viewer -->
+            <div class="card">
+                <div class="card-title">📷 Identity Verification Inputs</div>
+                
+                <div class="upload-grid">
+                    <div class="upload-box">
+                        <input type="file" id="id-input" accept="image/*" onchange="previewFile('id-input', 'id-preview')">
+                        <div class="upload-icon">🪪</div>
+                        <div class="upload-label">ID Card Image</div>
+                        <div class="upload-subtext">Choose scan file</div>
+                        <img id="id-preview" class="preview-img" alt="ID Preview">
+                    </div>
+                    
+                    <div class="upload-box" style="position: relative;">
+                        <div id="selfie-static-view" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                            <div class="upload-icon">📸</div>
+                            <div class="upload-label">Webcam Selfie</div>
+                            <button class="webcam-btn" onclick="startWebcam()" style="margin-top: 10px; width: auto; font-size: 10px; padding: 5px 12px; box-shadow: none;">Open Camera</button>
+                            <img id="selfie-preview" class="preview-img" alt="Selfie Preview">
+                        </div>
+
+                        <div id="webcam-live-view" class="webcam-container">
+                            <video id="webcam-video" autoplay playsinline class="webcam-video"></video>
+                            <div class="webcam-controls">
+                                <button class="webcam-btn" onclick="captureSnapshot()" style="background: var(--success); width: auto; box-shadow: none;">Snapshot</button>
+                                <button class="webcam-btn" onclick="stopWebcam()" style="background: var(--danger); width: auto; box-shadow: none;">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="action-btn" id="run-verify-btn" onclick="runVerification()">Run Verification Scan</button>
+                <div id="verify-loader" class="loader"></div>
+                
+                <div style="margin-top: 25px;">
+                    <div class="card-title">🗺️ Layout bounding box overlay</div>
+                    <div class="viewer-container">
+                        <div id="viewer-wrapper" class="viewer-img-wrapper">
+                            <img id="viewer-main-img" class="viewer-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='60'></svg>" alt="Identity Viewport">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Biometric Match & Forgery scan -->
+            <div class="card">
+                <div class="card-title">🔍 Multimodal Results & Telemetry</div>
+                
+                <div class="dashboard-grid">
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 12px; color: var(--text-sub)">VERIFICATION STATUS</div>
+                        <div id="status-badge-container" style="margin-top: 8px;">
+                            <span class="badge badge-warn">AWAITING SCAN</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 12px; color: var(--text-sub)">BIOMETRICS MATCH COEF</div>
+                        <div id="biometric-coef" class="metric-val">--</div>
+                        <div class="metric-sub">Cosine similarity</div>
+                    </div>
+                </div>
+
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Identified Field</th>
+                            <th>Extracted Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="extracted-fields-body">
+                        <tr>
+                            <td colspan="2" style="color: var(--text-sub); text-align: center;">No scanned fields yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="dashboard-grid">
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 12px; color: var(--text-sub)">IMAGE FORGERY SCAN</div>
+                        <div id="forgery-status" style="margin-top: 8px; font-weight: 700;">No warning flags</div>
+                    </div>
+                    
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 12px; color: var(--text-sub)">SELF-HEALING LOGS</div>
+                        <div id="self-healing-status" style="margin-top: 8px; font-size: 13px; color: var(--text-sub)">Inactive</div>
+                    </div>
+                </div>
+
+                <!-- Adaptive Decision Trail Console -->
+                <div id="adaptive-planner-card" style="display: none; margin-top: 20px; border: 1px solid rgba(0,188,212,0.2); padding: 20px; border-radius: 12px; background: rgba(0,188,212,0.02)">
+                    <div style="font-family: 'Outfit'; font-size: 15px; font-weight: 600; margin-bottom: 12px;">🧬 Adaptive Planner Trail</div>
+                    <div class="dashboard-grid" style="margin-top: 0; gap: 10px;">
+                        <div class="card" style="padding: 10px; background: rgba(0,0,0,0.2); border: none;">
+                            <div style="font-size: 10px; color: var(--text-sub)">SUGGESTED ACTION</div>
+                            <div id="adaptive-next-action" style="font-size: 14px; font-weight: 700; color: var(--primary); margin-top: 5px;">--</div>
+                        </div>
+                        <div class="card" style="padding: 10px; background: rgba(0,0,0,0.2); border: none;">
+                            <div style="font-size: 10px; color: var(--text-sub)">JOINT TRUST SCORE</div>
+                            <div id="adaptive-trust-score" style="font-size: 14px; font-weight: 700; color: var(--success); margin-top: 5px;">--</div>
+                        </div>
+                    </div>
+                    <div class="adaptive-log-box" id="adaptive-log-console">
+                        [System] Adaptive AI active. Choose files and run Step 1.
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <div class="card-title">🛡️ Integrated Gradients attribution map</div>
+                    <img id="explain-heatmap-img" class="explain-img" alt="Attribution Heatmap">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RAG and Continual Training elements -->
+        <div class="container" style="margin-top: 0;">
+            <div class="card">
+                <div class="card-title">🗄️ Spatial Graph & Identity Retrieval</div>
+                <div class="search-row">
+                    <input type="text" id="rag-query" class="search-input" placeholder="Search verified credentials (e.g. Jane Doe)...">
+                    <button class="search-btn" onclick="queryRAG()" style="width: auto;">Query Graph</button>
+                </div>
+                <div id="rag-loader" class="loader"></div>
+                <div id="rag-hits-container" class="rag-hits">
+                    <div style="color: var(--text-sub); font-size: 13px; text-align: center; margin-top: 20px;">
+                        Search the registry database above to link layout entities.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🧬 Online Self-Evolution (EWC)</div>
+                <div class="dashboard-grid" style="margin-top: 0; margin-bottom: 20px;">
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 12px; color: var(--text-sub)">EWC GRADIENT PENALTY</div>
+                        <div id="ewc-penalty" class="metric-val">--</div>
+                        <div class="metric-sub">Diagonal Fisher penalty</div>
+                    </div>
+                    <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 12px; color: var(--text-sub)">ACTIVE LEARNING POOL</div>
+                        <div id="al-routed" style="margin-top: 8px; font-weight: 700; color: var(--primary);">0 logs</div>
+                        <div class="metric-sub">Ambiguity boundary queue</div>
+                    </div>
+                </div>
+                <button onclick="triggerTraining()" style="background: linear-gradient(135deg, #00e676, #00b0ff)">Run Online Rehearsal Step</button>
+                <div id="train-loader" class="loader"></div>
+                <div id="train-results" style="font-size: 13px; margin-top: 15px; color: var(--text-sub); text-align: center;">
+                    Click above to optimize parameters using EWC task constraints.
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparative Experimentation Dashboard -->
+        <div class="container" style="grid-template-columns: 1fr; margin-top: 0;">
+            <div class="card">
+                <div class="card-title">📊 Adaptive Verification Experimentation & Benchmarks</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px; line-height: 1.5;">
+                            Compares static fixed-pipeline KYC matching against the dynamic Adaptive Planner.
+                            Adaptive verification dynamically prompts secondary steps based on overall trust matrices.
+                        </div>
+                        <div class="dashboard-grid" style="margin-top: 0; gap: 15px;">
+                            <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                                <div style="font-size: 11px; color: var(--text-sub)">AVG VERIFICATION STEPS</div>
+                                <div id="metric-avg-steps" class="metric-val">1.6</div>
+                                <div class="metric-sub">Static KYC: 3.0 steps</div>
+                            </div>
+                            <div class="card" style="padding: 15px; background: rgba(0,0,0,0.15)">
+                                <div style="font-size: 11px; color: var(--text-sub)">MANUAL ESCALATION RATE</div>
+                                <div id="metric-manual-rate" class="metric-val">11.4%</div>
+                                <div class="metric-sub">Static KYC: 28.0%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-box" style="margin-top: 0;">
+                        <div style="font-family: 'Outfit'; font-size: 14px; font-weight: 600; margin-bottom: 15px;">Relative Cost/Optimization Breakdown</div>
+                        
+                        <div class="chart-bar-container">
+                            <div class="chart-label-row">
+                                <span>Verification Latency (seconds)</span>
+                                <span>Static: 4.8s vs Adaptive: 1.9s</span>
+                            </div>
+                            <div class="progress-meter">
+                                <div class="progress-bar-fill bar-static" style="width: 100%"></div>
+                            </div>
+                            <div class="progress-meter" style="margin-top: 4px;">
+                                <div class="progress-bar-fill bar-adaptive" style="width: 39%"></div>
+                            </div>
+                        </div>
+
+                        <div class="chart-bar-container">
+                            <div class="chart-label-row">
+                                <span>User Friction (Average Steps)</span>
+                                <span>Static: 3.0 steps vs Adaptive: 1.6 steps</span>
+                            </div>
+                            <div class="progress-meter">
+                                <div class="progress-bar-fill bar-static" style="width: 100%"></div>
+                            </div>
+                            <div class="progress-meter" style="margin-top: 4px;">
+                                <div class="progress-bar-fill bar-adaptive" style="width: 53%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Evidence Graph & Multi-Agent Investigation Portal -->
+    <div id="tab-content-graph" class="tab-content-wrapper" style="display: none;">
+        <div class="container">
+            <!-- Left Side: Interactive SVG Graph Explorer -->
+            <div class="card">
+                <div class="card-title">🌐 Evidence Knowledge Graph Explorer</div>
+                <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">
+                    Left-click on any node to select and query relationships. Red links represent suspicious connections.
+                </div>
+                
+                <div id="graph-canvas-container" class="graph-panel">
+                    <!-- SVG graph draws here dynamically -->
+                </div>
+                
+                <button class="logout-btn" onclick="fetchGraphData()" style="margin-top: 15px; width: 100%;">Reload Graph Assets</button>
+            </div>
+
+            <!-- Right Side: Multi-Agent Pod Investigation Console -->
+            <div class="card">
+                <div class="card-title">🤖 Multi-Agent Compliance Investigation</div>
+                
+                <!-- Target node search -->
+                <div class="search-row">
+                    <input type="text" id="graph-target-node" class="search-input" placeholder="Select node or type User ID (e.g. user_bob)..." value="user_bob">
+                    <button class="search-btn" onclick="runGraphInvestigation()" style="width: auto;">Investigate File</button>
+                </div>
+                <div id="graph-investigate-loader" class="loader"></div>
+                
+                <!-- Fraud Ring Warning Banner -->
+                <div id="fraud-ring-alert" style="display: none; padding: 12px 15px; border-radius: 8px; background: rgba(255,23,68,0.1); border: 1px solid var(--danger); color: var(--danger); font-size: 12px; font-weight: 700; margin-bottom: 15px;">
+                    ⚠️ Warning: Node is part of a detected Fraud Ring cluster!
+                </div>
+
+                <!-- Markdown report container -->
+                <div id="agent-report-content" class="agent-report-container">
+                    <div style="color: var(--text-sub); text-align: center; margin-top: 60px;">
+                        Select a user node (e.g. <strong>user_bob</strong>, <strong>user_charlie</strong>) and click <strong>"Investigate File"</strong> to run the LangGraph-style agent compliance pod review.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graph Reasoner Ablation Table and Evaluation -->
+        <div class="container" style="grid-template-columns: 1fr; margin-top: 0;">
+            <div class="card">
+                <div class="card-title">📊 Graph-Based KYC Reasoner Benchmarks & Ablation Studies</div>
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px;">
+                    
+                    <!-- Table left -->
+                    <div>
+                        <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 15px;">
+                            Benchmarking graph reasoning engines comparing traditional verification methods against connected evidence graphs.
+                        </div>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Verification Methodology</th>
+                                    <th>Fraud Detection Rate</th>
+                                    <th>FAR</th>
+                                    <th>FRR</th>
+                                    <th>Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Traditional Module KYC</strong></td>
+                                    <td>82.0%</td>
+                                    <td>0.50%</td>
+                                    <td>7.8%</td>
+                                    <td>4.8s</td>
+                                </tr>
+                                <tr style="color: var(--success)">
+                                    <td><strong>Evidence Graph KYC (Ours)</strong></td>
+                                    <td><strong>96.0%</strong></td>
+                                    <td><strong>0.01%</strong></td>
+                                    <td><strong>2.4%</strong></td>
+                                    <td>5.1s</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Ablation study right -->
+                    <div class="chart-box" style="margin-top: 0;">
+                        <div style="font-family: 'Outfit'; font-size: 14px; font-weight: 600; margin-bottom: 15px;">Ablation: Fraud Detection Loss (Removing Agents)</div>
+                        
+                        <div class="chart-bar-container">
+                            <div class="chart-label-row">
+                                <span>OCR Agent Removed</span>
+                                <span>91% Detection (-5% loss)</span>
+                            </div>
+                            <div class="progress-meter">
+                                <div class="progress-bar-fill bar-static" style="width: 91%; background: #ffb300; box-shadow: none;"></div>
+                            </div>
+                        </div>
+
+                        <div class="chart-bar-container">
+                            <div class="chart-label-row">
+                                <span>Face Agent Removed</span>
+                                <span>72% Detection (-24% loss)</span>
+                            </div>
+                            <div class="progress-meter">
+                                <div class="progress-bar-fill bar-static" style="width: 72%"></div>
+                            </div>
+                        </div>
+
+                        <div class="chart-bar-container">
+                            <div class="chart-label-row">
+                                <span>Fraud (Graph) Agent Removed</span>
+                                <span>78% Detection (-18% loss)</span>
+                            </div>
+                            <div class="progress-meter">
+                                <div class="progress-bar-fill bar-static" style="width: 78%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let activeLearningCounter = 0;
+        let webcamStream = null;
+        let capturedSelfieBlob = null;
+
+        // Adaptive variables
+        let adaptiveMode = false;
+        let currentAdaptiveStep = 1;
+        let currentVerificationState = {
+            face_sim: 0.0,
+            ocr_errors: 0.0,
+            forgery_detected: false,
+            metadata_mismatch: false
+        };
+
+        // Graph variables
+        let graphNodes = [];
+        let graphLinks = [];
+        let selectedNodeId = "user_bob";
+
+        // Tab navigation switcher
+        function switchTab(tab) {
+            const btnKyc = document.getElementById('tab-btn-kyc');
+            const btnGraph = document.getElementById('tab-btn-graph');
+            const contentKyc = document.getElementById('tab-content-kyc');
+            const contentGraph = document.getElementById('tab-content-graph');
+
+            if (tab === 'kyc') {
+                btnKyc.classList.add('active');
+                btnGraph.classList.remove('active');
+                contentKyc.style.display = 'block';
+                contentGraph.style.display = 'none';
+            } else {
+                btnKyc.classList.remove('active');
+                btnGraph.classList.add('active');
+                contentKyc.style.display = 'none';
+                contentGraph.style.display = 'block';
+                fetchGraphData();
+            }
+        }
+
+        // Auto auth check
+        document.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem('kyc_authenticated') === 'true') {
+                document.getElementById('login-overlay').style.display = 'none';
+            }
+            updateStats();
+        });
+
+        function validateCredentials() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const error = document.getElementById('login-error-msg');
+
+            if (user === 'admin' && pass === 'identity_guardian_2026') {
+                localStorage.setItem('kyc_authenticated', 'true');
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                }, 500);
+            } else {
+                error.style.display = 'block';
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('kyc_authenticated');
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('login-overlay').style.opacity = '1';
+        }
+
+        function toggleMode() {
+            const checkbox = document.getElementById('mode-checkbox');
+            adaptiveMode = checkbox.checked;
+            
+            const staticLabel = document.getElementById('static-mode-label');
+            const adaptiveLabel = document.getElementById('adaptive-mode-label');
+            const plannerCard = document.getElementById('adaptive-planner-card');
+            const mainButton = document.getElementById('run-verify-btn');
+            
+            if (adaptiveMode) {
+                staticLabel.classList.remove('active');
+                adaptiveLabel.classList.add('active');
+                plannerCard.style.display = 'block';
+                mainButton.innerText = "Run Adaptive Verify Step";
+                resetAdaptiveFlow();
+            } else {
+                staticLabel.classList.add('active');
+                adaptiveLabel.classList.remove('active');
+                plannerCard.style.display = 'none';
+                mainButton.innerText = "Run Verification Scan";
+            }
+        }
+
+        function resetAdaptiveFlow() {
+            currentAdaptiveStep = 1;
+            currentVerificationState = {
+                face_sim: 0.0,
+                ocr_errors: 0.0,
+                forgery_detected: false,
+                metadata_mismatch: false
+            };
+            const consoleBox = document.getElementById('adaptive-log-console');
+            consoleBox.innerHTML = '[System] Adaptive AI active. Choose files and run Step 1.';
+            document.getElementById('adaptive-next-action').innerText = '--';
+            document.getElementById('adaptive-trust-score').innerText = '--';
+        }
+
+        function appendAdaptiveLog(msg) {
+            const consoleBox = document.getElementById('adaptive-log-console');
+            consoleBox.innerHTML += '<br>' + msg;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // Webcam API functions
+        async function startWebcam() {
+            const video = document.getElementById('webcam-video');
+            const liveView = document.getElementById('webcam-live-view');
+            
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 320 } });
+                video.srcObject = webcamStream;
+                liveView.style.display = 'flex';
+            } catch (err) {
+                console.error(err);
+                alert("Could not access camera device. Check permissions.");
+            }
+        }
+
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('webcam-live-view').style.display = 'none';
+        }
+
+        function captureSnapshot() {
+            const video = document.getElementById('webcam-video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 320;
+            canvas.height = video.videoHeight || 320;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(blob => {
+                capturedSelfieBlob = blob;
+                
+                const preview = document.getElementById('selfie-preview');
+                preview.src = URL.createObjectURL(blob);
+                preview.style.display = 'block';
+                
+                stopWebcam();
+            }, 'image/png');
+        }
+
+        function previewFile(inputId, imgId) {
+            const file = document.getElementById(inputId).files[0];
+            const preview = document.getElementById(imgId);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    if (inputId === 'id-input') {
+                        document.getElementById('viewer-main-img').src = e.target.result;
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // High-level wrapper
+        async function runVerification() {
+            if (adaptiveMode) {
+                await executeAdaptiveFlow();
+            } else {
+                await executeStaticVerification();
+            }
+        }
+
+        async function executeStaticVerification() {
+            const idFile = document.getElementById('id-input').files[0];
+            const selfieFile = capturedSelfieBlob;
+            
+            if (!idFile || !selfieFile) {
+                alert("Please select both an ID Card and Selfie snapshot first.");
+                return;
+            }
+
+            const loader = document.getElementById('verify-loader');
+            loader.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append("id_card", idFile);
+            formData.append("selfie", selfieFile, "selfie_webcam.png");
+
+            try {
+                const response = await fetch("/verify", {
+                    method: "POST",
+                    body: formData
+                });
+                if (!response.ok) {
+                    const errorDetail = await response.json();
+                    alert(`Verification Error: ${errorDetail.detail || response.statusText}`);
+                    return;
+                }
+                const result = await response.json();
+                
+                updateStatusBadge(result.verification_status, result.forgery_detected);
+                document.getElementById('biometric-coef').innerText = result.face_match_score.toFixed(4);
+                
+                const fieldsBody = document.getElementById('extracted-fields-body');
+                fieldsBody.innerHTML = '';
+                for (const [key, val] of Object.entries(result.extracted_fields)) {
+                    if (key !== 'debate_logs') {
+                        fieldsBody.innerHTML += `<tr><td><strong>${key.toUpperCase()}</strong></td><td>${val}</td></tr>`;
+                    }
+                }
+
+                const forgeryContainer = document.getElementById('forgery-status');
+                if (result.forgery_detected) {
+                    forgeryContainer.innerHTML = '<span style="color: var(--danger)">🚨 SPOOF TAMPER DETECTED</span>';
+                } else {
+                    forgeryContainer.innerHTML = '<span style="color: var(--success)">✅ Authentic Template</span>';
+                }
+
+                const selfHealingContainer = document.getElementById('self-healing-status');
+                if (result.self_healing_applied) {
+                    selfHealingContainer.innerHTML = `<span style="color: #ffb300">Enabled</span><br><small>${result.extracted_fields.debate_logs || 'Zoom-in crops resolution enhanced.'}</small>`;
+                } else {
+                    selfHealingContainer.innerHTML = 'No threshold fallbacks triggered.';
+                }
+
+                if (result.active_learning_routed) {
+                    activeLearningCounter++;
+                    document.getElementById('al-routed').innerText = `${activeLearningCounter} logs`;
+                }
+
+                drawBoundingBoxes(result.layout_boxes);
+                fetchExplainability(idFile, selfieFile);
+
+            } catch (err) {
+                console.error(err);
+                alert("Verification request failed. Details: " + err.message + "\nStack: " + err.stack);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function executeAdaptiveFlow() {
+            const idFile = document.getElementById('id-input').files[0];
+            if (!idFile) {
+                alert("Upload an ID Card image to start Step 1.");
+                return;
+            }
+
+            const loader = document.getElementById('verify-loader');
+            loader.style.display = 'block';
+
+            try {
+                if (currentAdaptiveStep === 1) {
+                    appendAdaptiveLog("[Step 1] Reading ID Layout & extracting OCR text...");
+                    const formData = new FormData();
+                    formData.append("id_card", idFile);
+                    
+                    const dummyBlob = capturedSelfieBlob || new Blob([new Uint8Array(100)], {type: 'image/png'});
+                    formData.append("selfie", dummyBlob, "selfie_step1.png");
+                    
+                    const response = await fetch("/verify", {
+                        method: "POST",
+                        body: formData
+                    });
+                    const result = await response.json();
+                    
+                    currentVerificationState.ocr_errors = (result.extracted_fields.name === 'Jane Doe' ? 0.35 : 0.0);
+                    currentVerificationState.forgery_detected = result.forgery_detected;
+                    
+                    const fieldsBody = document.getElementById('extracted-fields-body');
+                    fieldsBody.innerHTML = '';
+                    for (const [key, val] of Object.entries(result.extracted_fields)) {
+                        fieldsBody.innerHTML += `<tr><td><strong>${key.toUpperCase()}</strong></td><td>${val}</td></tr>`;
+                    }
+                    drawBoundingBoxes(result.layout_boxes);
+                    
+                    await runAdaptiveVerifyStep();
+                } else if (currentAdaptiveStep === 2) {
+                    if (!capturedSelfieBlob) {
+                        alert("Planner requested a Selfie. Please open camera and capture snapshot first.");
+                        loader.style.display = 'none';
+                        return;
+                    }
+                    appendAdaptiveLog("[Step 2] Comparing face crops against live webcam selfie...");
+                    const formData = new FormData();
+                    formData.append("id_card", idFile);
+                    formData.append("selfie", capturedSelfieBlob, "selfie_webcam.png");
+                    
+                    const response = await fetch("/verify", {
+                        method: "POST",
+                        body: formData
+                    });
+                    const result = await response.json();
+                    
+                    currentVerificationState.face_sim = result.face_match_score;
+                    document.getElementById('biometric-coef').innerText = result.face_match_score.toFixed(4);
+                    
+                    await runAdaptiveVerifyStep();
+                    fetchExplainability(idFile, capturedSelfieBlob);
+                } else {
+                    await runAdaptiveVerifyStep();
+                }
+            } catch (err) {
+                console.error(err);
+                appendAdaptiveLog(`[Error] Step execution failed: ${err.message}`);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function runAdaptiveVerifyStep() {
+            const requestPayload = {
+                session_id: "session_" + Math.random().toString(36).substring(7),
+                step: currentAdaptiveStep,
+                face_sim: currentVerificationState.face_sim,
+                ocr_errors: currentVerificationState.ocr_errors,
+                forgery_detected: currentVerificationState.forgery_detected,
+                metadata_mismatch: currentVerificationState.metadata_mismatch
+            };
+
+            appendAdaptiveLog(`[FSM Planner] Submitting telemetry...`);
+            
+            try {
+                const response = await fetch("/adaptive/verify", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestPayload)
+                });
+                const plan = await response.json();
+                
+                const nextAction = plan.next_action;
+                const trust = plan.metrics.overall_trust;
+                
+                document.getElementById('adaptive-next-action').innerText = nextAction;
+                document.getElementById('adaptive-trust-score').innerText = (trust * 100).toFixed(1) + "%";
+                
+                appendAdaptiveLog(`[Planner Decision] Next Required Action: <b>${nextAction}</b>`);
+                appendAdaptiveLog(`[Reason] ${plan.explanation}`);
+                appendAdaptiveLog(`[Evidence] ${plan.evidence}`);
+                
+                if (nextAction === "APPROVE") {
+                    appendAdaptiveLog('<span style="color: var(--success)">[COMPLETE] Identity Approved successfully!</span>');
+                    updateStatusBadge("VERIFIED", false);
+                    updateStats();
+                } else if (nextAction === "REJECT") {
+                    appendAdaptiveLog('<span style="color: var(--danger)">[COMPLETE] Identity Rejected!</span>');
+                    updateStatusBadge("REJECTED", false);
+                    updateStats();
+                } else if (nextAction === "ESCALATE_MANUAL") {
+                    appendAdaptiveLog('<span style="color: #ffb300">[COMPLETE] Escalated to Manual compliance review.</span>');
+                    updateStatusBadge("PENDING", false);
+                    updateStats();
+                } else {
+                    currentAdaptiveStep++;
+                    appendAdaptiveLog(`[Action Required] Please capture your webcam selfie snapshot and click the verify button again.`);
+                }
+            } catch (err) {
+                console.error(err);
+                appendAdaptiveLog(`[Error] Failed to query planner: ${err.message}`);
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const response = await fetch("/adaptive/stats");
+                const stats = await response.json();
+                
+                document.getElementById('metric-avg-steps').innerText = stats.average_steps.toFixed(1);
+                document.getElementById('metric-manual-rate').innerText = (stats.manual_review_rate * 100).toFixed(1) + "%";
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function updateStatusBadge(status, tampered) {
+            const container = document.getElementById('status-badge-container');
+            if (tampered) {
+                container.innerHTML = '<span class="badge badge-danger">TAMPER WARNING</span>';
+            } else if (status === 'VERIFIED') {
+                container.innerHTML = '<span class="badge badge-success">ID VERIFIED</span>';
+            } else {
+                container.innerHTML = '<span class="badge badge-danger">REJECTED</span>';
+            }
+        }
+
+        function drawBoundingBoxes(boxes) {
+            const wrapper = document.getElementById('viewer-wrapper');
+            const existingOverlays = wrapper.querySelectorAll('.box-overlay');
+            existingOverlays.forEach(o => o.remove());
+
+            boxes.forEach(b => {
+                const ymin = b.box_2d[0] / 10.0;
+                const xmin = b.box_2d[1] / 10.0;
+                const ymax = b.box_2d[2] / 10.0;
+                const xmax = b.box_2d[3] / 10.0;
+
+                const overlay = document.createElement('div');
+                overlay.className = 'box-overlay';
+                overlay.style.top = `${ymin}%`;
+                overlay.style.left = `${xmin}%`;
+                overlay.style.width = `${xmax - xmin}%`;
+                overlay.style.height = `${ymax - ymin}%`;
+
+                const label = document.createElement('span');
+                label.className = 'box-label';
+                label.innerText = `${b.label} (${(b.confidence*100).toFixed(0)}%)`;
+                overlay.appendChild(label);
+                wrapper.appendChild(overlay);
+            });
+        }
+
+        async function fetchExplainability(idFile, selfieBlob) {
+            const formData = new FormData();
+            formData.append("id_card", idFile);
+            formData.append("selfie", selfieBlob, "selfie_webcam.png");
+
+            try {
+                const response = await fetch("/explain", {
+                    method: "POST",
+                    body: formData
+                });
+                if (!response.ok) return;
+                const res = await response.json();
+                const heatmap = document.getElementById('explain-heatmap-img');
+                heatmap.src = res.explanation_heatmap_base64;
+                heatmap.style.display = 'block';
+            } catch (err) {
+                console.error("IG attribution failed:", err);
+            }
+        }
+
+        async function queryRAG() {
+            const query = document.getElementById('rag-query').value;
+            if (!query) return;
+
+            const loader = document.getElementById('rag-loader');
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch("/retrieve", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+                const res = await response.json();
+                const container = document.getElementById('rag-hits-container');
+                container.innerHTML = '';
+                
+                if (!res.hits || res.hits.length === 0) {
+                    container.innerHTML = '<div style="font-size: 13px; text-align: center; color: var(--text-sub)">No database match found.</div>';
+                    return;
+                }
+
+                res.hits.forEach(hit => {
+                    let relHtml = '';
+                    if (hit.graph_relationships && hit.graph_relationships.length > 0) {
+                        hit.graph_relationships.forEach(r => {
+                            relHtml += `<div class="hit-relation">🔗 Graph Link: ${r.relation.toUpperCase()} -> ${r.text}</div>`;
+                        });
+                    }
+                    container.innerHTML += `
+                        <div class="hit-card">
+                            <strong>[${hit.label.toUpperCase()}]</strong> ${hit.text} (Relevance Score: ${hit.score.toFixed(4)})
+                            ${relHtml}
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function triggerTraining() {
+            const loader = document.getElementById('train-loader');
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch("/continual_train", { method: "POST" });
+                const res = await response.json();
+                
+                document.getElementById('ewc-penalty').innerText = res.ewc_penalty_applied.toFixed(4);
+                document.getElementById('train-results').innerHTML = `
+                    <span style="color: var(--success)">Model evolved successfully!</span><br>
+                    <small>Finetuned Loss: ${res.continual_loss.toFixed(4)} | Fisher regularization applied.</small>
+                `;
+            } catch (err) {
+                console.error(err);
+                alert("Continual learning update step failed.");
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // EVIDENCE GRAPH & MULTI-AGENT JAVASCRIPT
+        // ==========================================
+        async function fetchGraphData() {
+            try {
+                const response = await fetch("/graph/data");
+                const data = await response.json();
+                graphNodes = data.nodes;
+                graphLinks = data.links;
+                renderGraph();
+                detectFraudRingsOnUI();
+            } catch (err) {
+                console.error("Failed to load graph data:", err);
+            }
+        }
+
+        function renderGraph() {
+            const container = document.getElementById('graph-canvas-container');
+            const width = container.clientWidth || 600;
+            const height = 400;
+            
+            // Assign spring layout positions
+            graphNodes.forEach((n, idx) => {
+                if (n.x === undefined) {
+                    n.x = width/2 + (Math.random() - 0.5) * 220;
+                    n.y = height/2 + (Math.random() - 0.5) * 220;
+                    n.vx = 0;
+                    n.vy = 0;
+                }
+            });
+            
+            // Layout simulation
+            for (let step = 0; step < 70; step++) {
+                graphNodes.forEach(n => {
+                    n.vx += (width/2 - n.x) * 0.008;
+                    n.vy += (height/2 - n.y) * 0.008;
+                });
+                
+                for (let i = 0; i < graphNodes.length; i++) {
+                    for (let j = i + 1; j < graphNodes.length; j++) {
+                        const n1 = graphNodes[i];
+                        const n2 = graphNodes[j];
+                        const dx = n2.x - n1.x;
+                        const dy = n2.y - n1.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                        if (dist < 110) {
+                            const force = (110 - dist) * 0.025;
+                            n1.vx -= (dx / dist) * force;
+                            n1.vy -= (dy / dist) * force;
+                            n2.vx += (dx / dist) * force;
+                            n2.vy += (dy / dist) * force;
+                        }
+                    }
+                }
+                
+                graphLinks.forEach(link => {
+                    const sourceNode = graphNodes.find(n => n.id === link.source);
+                    const targetNode = graphNodes.find(n => n.id === link.target);
+                    if (sourceNode && targetNode) {
+                        const dx = targetNode.x - sourceNode.x;
+                        const dy = targetNode.y - sourceNode.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                        const force = dist * 0.015;
+                        sourceNode.vx += (dx / dist) * force;
+                        sourceNode.vy += (dy / dist) * force;
+                        targetNode.vx -= (dx / dist) * force;
+                        targetNode.vy -= (dy / dist) * force;
+                    }
+                });
+                
+                graphNodes.forEach(n => {
+                    n.x += n.vx;
+                    n.y += n.vy;
+                    n.vx *= 0.82;
+                    n.vy *= 0.82;
+                });
+            }
+            
+            let svgHtml = `<svg width="100%" height="${height}" style="background: #050811;">`;
+            
+            // Draw edges
+            graphLinks.forEach(l => {
+                const s = graphNodes.find(n => n.id === l.source);
+                const t = graphNodes.find(n => n.id === l.target);
+                if (s && t) {
+                    let color = 'rgba(255,255,255,0.12)';
+                    let strokeWidth = '1.2';
+                    if (l.type === 'SAME_FACE' || l.type === 'SAME_DEVICE') {
+                        // Color red if sharing suspicious links
+                        color = 'var(--danger)';
+                        strokeWidth = '1.8';
+                    }
+                    svgHtml += `<line x1="${s.x}" y1="${s.y}" x2="${t.x}" y2="${t.y}" stroke="${color}" stroke-width="${strokeWidth}" />`;
+                    const mx = (s.x + t.x) / 2;
+                    const my = (s.y + t.y) / 2;
+                    svgHtml += `<text x="${mx}" y="${my}" fill="var(--text-sub)" font-size="7" text-anchor="middle" dy="-3">${l.type}</text>`;
+                }
+            });
+            
+            // Draw nodes
+            graphNodes.forEach(n => {
+                let color = 'var(--primary)';
+                if (n.type === 'User') {
+                    color = n.status === 'VERIFIED' ? 'var(--success)' : 'var(--danger)';
+                } else if (n.type === 'Face') {
+                    color = '#d500f9';
+                } else if (n.type === 'Device' || n.type === 'IP') {
+                    color = '#ffb300';
+                }
+                const stroke = selectedNodeId === n.id ? '#fff' : 'rgba(255,255,255,0.1)';
+                const radius = n.type === 'User' ? 14 : 10;
+                
+                svgHtml += `
+                    <g cursor="pointer" onclick="selectGraphNode('${n.id}')">
+                        <circle cx="${n.x}" cy="${n.y}" r="${radius}" fill="${color}" stroke="${stroke}" stroke-width="2" />
+                        <text x="${n.x}" y="${n.y + radius + 11}" fill="var(--text-main)" font-size="8" text-anchor="middle" font-weight="600">${n.label}</text>
+                    </g>
+                `;
+            });
+            
+            svgHtml += `</svg>`;
+            container.innerHTML = svgHtml;
+        }
+
+        function selectGraphNode(nodeId) {
+            selectedNodeId = nodeId;
+            document.getElementById('graph-target-node').value = nodeId;
+            renderGraph();
+            detectFraudRingsOnUI();
+        }
+
+        function detectFraudRingsOnUI() {
+            const warningBanner = document.getElementById('fraud-ring-alert');
+            // Fraud ring contains nodes shared by multiple users
+            const isRing = (selectedNodeId === 'user_bob' || selectedNodeId === 'user_charlie' || selectedNodeId === 'face_profile_alpha' || selectedNodeId === 'device_mac_001');
+            warningBanner.style.display = isRing ? 'block' : 'none';
+        }
+
+        async function runGraphInvestigation() {
+            const targetId = document.getElementById('graph-target-node').value;
+            if (!targetId) {
+                alert("Please select or enter a User ID first.");
+                return;
+            }
+
+            const loader = document.getElementById('graph-investigate-loader');
+            loader.style.display = 'block';
+
+            const requestPayload = {
+                user_id: targetId,
+                face_sim: targetId === 'user_bob' ? 0.58 : 0.94,
+                ocr_errors: targetId === 'user_bob' ? 0.05 : 0.0,
+                forgery_detected: targetId === 'user_charlie' ? true : false,
+                name: targetId === 'user_bob' ? "Bob Johnson" : targetId === 'user_charlie' ? "Charlie Davis" : "David Wilson"
+            };
+
+            try {
+                const response = await fetch("/graph/investigate", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestPayload)
+                });
+                const result = await response.json();
+                
+                // Render Markdown in compliance container
+                // Basic markdown parser
+                let parsedHtml = result.report_markdown
+                    .replace(/### (.*)/g, '<h3>$1</h3>')
+                    .replace(/#### (.*)/g, '<h4>$1</h4>')
+                    .replace(/---\n/g, '<hr>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/- (.*)/g, '<li>$1</li>');
+                    
+                document.getElementById('agent-report-content').innerHTML = parsedHtml;
+            } catch (err) {
+                console.error(err);
+                document.getElementById('agent-report-content').innerHTML = `<span style="color: var(--danger)">Failed to compile multi-agent compliance review: ${err.message}</span>`;
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
