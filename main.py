@@ -26,6 +26,7 @@ from src.models.vlm_finetuning import VLMFineTuningPipeline, VLMDocDataset
 from src.models.ocr_research import OCRResearchManager
 from src.evaluation.experiments_framework import ExperimentRegistry
 from src.models.failure_lab import FailureClassifier, ExplainabilityEngine
+from src.models.synthetic_data import SyntheticDataEngine
 
 app = FastAPI(
     title="IdentityGuardian AI API",
@@ -550,4 +551,31 @@ def get_all_explanations():
         return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Explainability Generation Error: {str(e)}")
+
+# Synthetic Data Setup
+synthetic_data_engine = SyntheticDataEngine()
+
+@app.post("/synthetic/generate")
+async def generate_synthetic_data(
+    id_card: UploadFile = File(...),
+    selfie: Optional[UploadFile] = File(None),
+    options: str = Form("")
+):
+    try:
+        img_bytes = await id_card.read()
+        selfie_bytes = await selfie.read() if selfie else None
+        options_list = [o.strip() for o in options.split(",") if o.strip()]
+        out_bytes = synthetic_data_engine.generate_synthetic_document(img_bytes, selfie_bytes, options_list)
+        base64_str = base64.b64encode(out_bytes).decode("utf-8")
+        return {"synthetic_image_base64": f"data:image/png;base64,{base64_str}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Synthetic Generation Error: {str(e)}")
+
+@app.get("/synthetic/benchmark")
+def get_synthetic_benchmark():
+    try:
+        res = synthetic_data_engine.get_robustness_benchmarks()
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Synthetic Benchmarking Error: {str(e)}")
 
