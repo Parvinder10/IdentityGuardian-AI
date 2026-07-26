@@ -723,6 +723,7 @@
             <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">Evidence Graph Portal</button>
             <button class="tab-btn" id="tab-btn-vlm" onclick="switchTab('vlm')">VLM Intelligence</button>
             <button class="tab-btn" id="tab-btn-ocr" onclick="switchTab('ocr')">OCR Research Lab</button>
+            <button class="tab-btn" id="tab-btn-experiments" onclick="switchTab('experiments')">Research Experiments</button>
         </div>
 
         <button class="logout-btn" onclick="handleLogout()">Exit Node</button>
@@ -1453,6 +1454,88 @@
         </div>
     </div>
 
+    <!-- Tab 5: Research Experiments -->
+    <div id="tab-content-experiments" class="tab-content-wrapper" style="display: none;">
+        <div class="container">
+            <!-- Left Side: Selection and Telemetry console -->
+            <div class="card">
+                <div class="card-title">🧪 Scientific Experiment Selection</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Select one of our 10 core scientific experiments to view methodology and run simulations.
+                </div>
+                
+                <div class="input-group">
+                    <label for="experiment-select">Choose Research Experiment</label>
+                    <select id="experiment-select" class="search-input" onchange="displaySelectedExperiment(this.value)" style="width: 100%; border-radius: 8px;">
+                        <!-- Filled dynamically -->
+                    </select>
+                </div>
+                
+                <div class="card" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 6px;">RESEARCH QUESTION</div>
+                    <div id="exp-question" style="font-size: 13px; font-weight: 500; line-height: 1.5;">--</div>
+                </div>
+
+                <div class="card" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 12px; color: var(--success); font-weight: 600; margin-bottom: 6px;">RESEARCH HYPOTHESIS</div>
+                    <div id="exp-hypothesis" style="font-size: 13px; line-height: 1.5;">--</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                    <div class="card" style="padding: 10px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 10px; color: var(--text-sub)">BASELINE METHOD</div>
+                        <div id="exp-baseline" style="font-size: 12px; font-weight: 600; margin-top: 5px;">--</div>
+                    </div>
+                    <div class="card" style="padding: 10px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 10px; color: var(--text-sub)">IMPROVED METHOD</div>
+                        <div id="exp-improved" style="font-size: 12px; font-weight: 600; color: var(--success); margin-top: 5px;">--</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 10px; color: var(--text-sub)">EVALUATION DATASET</div>
+                    <div id="exp-dataset" style="font-size: 12px; font-weight: 600; margin-top: 5px;">--</div>
+                </div>
+
+                <button class="action-btn" onclick="runExperimentSimulation()" style="background: linear-gradient(135deg, #00e676, #00b0ff); margin-top: 25px;">Launch Experiment Simulation</button>
+                <div id="exp-loader" class="loader"></div>
+            </div>
+
+            <!-- Right Side: Comparative metrics table and logs -->
+            <div class="card">
+                <div class="card-title">📊 Comparative Evaluation Metrics</div>
+                
+                <table class="results-table" style="margin-top: 0;">
+                    <thead>
+                        <tr>
+                            <th>Evaluation Parameter</th>
+                            <th>Baseline Method</th>
+                            <th>Improved Method</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exp-results-table-body">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+                
+                <div class="card" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 8px;">RESEARCH DISCUSSION</div>
+                    <div id="exp-discussion" style="font-size: 13px; line-height: 1.5; color: #a2b4cd;">--</div>
+                </div>
+
+                <div class="card" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.15); border: 1px solid rgba(0,230,118,0.2)">
+                    <div style="font-size: 11px; color: var(--success); margin-bottom: 8px;">RESEARCH CONCLUSION</div>
+                    <div id="exp-conclusion" style="font-size: 13px; font-weight: 600; line-height: 1.5;">--</div>
+                </div>
+
+                <!-- Simulation terminal -->
+                <div class="adaptive-log-box" id="exp-log-console" style="min-height: 120px; font-family: monospace; font-size: 11px;">
+                    [System] Experiments terminal inactive. Select an experiment and run scan...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let activeLearningCounter = 0;
         let webcamStream = null;
@@ -1479,21 +1562,25 @@
             const btnGraph = document.getElementById('tab-btn-graph');
             const btnVlm = document.getElementById('tab-btn-vlm');
             const btnOcr = document.getElementById('tab-btn-ocr');
+            const btnExp = document.getElementById('tab-btn-experiments');
             
             const contentKyc = document.getElementById('tab-content-kyc');
             const contentGraph = document.getElementById('tab-content-graph');
             const contentVlm = document.getElementById('tab-content-vlm');
             const contentOcr = document.getElementById('tab-content-ocr');
+            const contentExp = document.getElementById('tab-content-experiments');
 
             // Deactivate all
             btnKyc.classList.remove('active');
             btnGraph.classList.remove('active');
             btnVlm.classList.remove('active');
             btnOcr.classList.remove('active');
+            btnExp.classList.remove('active');
             contentKyc.style.display = 'none';
             contentGraph.style.display = 'none';
             contentVlm.style.display = 'none';
             contentOcr.style.display = 'none';
+            contentExp.style.display = 'none';
 
             if (tab === 'kyc') {
                 btnKyc.classList.add('active');
@@ -1511,6 +1598,10 @@
                 btnOcr.classList.add('active');
                 contentOcr.style.display = 'block';
                 fetchOCRBenchmarks();
+            } else if (tab === 'experiments') {
+                btnExp.classList.add('active');
+                contentExp.style.display = 'block';
+                loadExperimentsList();
             }
         }
 
@@ -2379,7 +2470,6 @@
             loader.style.display = 'block';
 
             // 1. Fetch preprocessed image preview
-            // We apply the first selected filter or the deskew by default for visual display
             const activeMethod = options.length > 0 ? options[0] : "Deskewing";
             
             const preprocessForm = new FormData();
@@ -2428,6 +2518,90 @@
             } catch (err) {
                 console.error(err);
                 alert("OCR prediction execution failed: " + err.message);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // RESEARCH EXPERIMENTS CONTROLLERS
+        // ==========================================
+        let registeredExperiments = [];
+
+        async function loadExperimentsList() {
+            try {
+                const response = await fetch("/experiments/list");
+                const data = await response.json();
+                registeredExperiments = data.experiments;
+
+                const selector = document.getElementById('experiment-select');
+                selector.innerHTML = '';
+                registeredExperiments.forEach((exp, idx) => {
+                    selector.innerHTML += `<option value="${idx}">${exp.name}</option>`;
+                });
+
+                displaySelectedExperiment(0);
+            } catch (err) {
+                console.error("Failed to load experiments list:", err);
+            }
+        }
+
+        function displaySelectedExperiment(index) {
+            const exp = registeredExperiments[index];
+            if (!exp) return;
+
+            document.getElementById('exp-question').innerText = exp.question;
+            document.getElementById('exp-hypothesis').innerText = exp.hypothesis;
+            document.getElementById('exp-baseline').innerText = exp.baseline;
+            document.getElementById('exp-improved').innerText = exp.improved_method;
+            document.getElementById('exp-dataset').innerText = exp.dataset;
+
+            // Render Results Table
+            const tableBody = document.getElementById('exp-results-table-body');
+            tableBody.innerHTML = '';
+            
+            exp.metrics.forEach(metric => {
+                const bVal = exp.results.baseline[metric] || 'N/A';
+                const iVal = exp.results.improved[metric] || 'N/A';
+                tableBody.innerHTML += `
+                    <tr>
+                        <td><strong>${metric}</strong></td>
+                        <td>${bVal}</td>
+                        <td style="color: var(--success); font-weight: 600;">${iVal}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('exp-discussion').innerText = exp.discussion;
+            document.getElementById('exp-conclusion').innerText = exp.conclusion;
+        }
+
+        async function runExperimentSimulation() {
+            const index = document.getElementById('experiment-select').value;
+            const exp = registeredExperiments[index];
+            if (!exp) return;
+
+            const loader = document.getElementById('exp-loader');
+            loader.style.display = 'block';
+
+            const consoleBox = document.getElementById('exp-log-console');
+            consoleBox.innerHTML = `[Scheduler] Queuing job for experiment: ${exp.name}...`;
+
+            try {
+                const response = await fetch("/experiments/run", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: exp.name })
+                });
+                const res = await response.json();
+
+                res.history.forEach(log => {
+                    consoleBox.innerHTML += `<br>${log}`;
+                });
+                consoleBox.innerHTML += `<br><span style="color: var(--success)">[SUCCESS] Automated benchmark report generated. Output saved to: <code>${res.report_saved}</code></span>`;
+            } catch (err) {
+                console.error(err);
+                consoleBox.innerHTML += `<br><span style="color: var(--danger)">[Error] Experiment run failed: ${err.message}</span>`;
             } finally {
                 loader.style.display = 'none';
             }
