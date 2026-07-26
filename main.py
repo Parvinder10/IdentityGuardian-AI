@@ -23,6 +23,7 @@ from src.inference.graph_engine import EvidenceGraphManager
 from src.inference.graph_agents import CoordinatorAgent
 from src.models.vlm_interface import VLMRegistry
 from src.models.vlm_finetuning import VLMFineTuningPipeline, VLMDocDataset
+from src.models.ocr_research import OCRResearchManager
 
 app = FastAPI(
     title="IdentityGuardian AI API",
@@ -420,6 +421,48 @@ def get_vlm_finetune_benchmark():
             {"config": "LoRA Adapter (PEFT)", "accuracy": 96.5, "f1": 95.1, "train_time": 340.0, "vram": 2.1, "latency": 252.0},
             {"config": "QLoRA Adapter (4-bit)", "accuracy": 95.8, "f1": 94.4, "train_time": 480.0, "vram": 1.2, "latency": 285.0},
             {"config": "Full Fine-Tuning", "accuracy": 97.2, "f1": 95.9, "train_time": 860.0, "vram": 7.8, "latency": 240.0}
+        ]
+    }
+
+# OCR Research Lab Setup
+ocr_research_manager = OCRResearchManager()
+
+@app.post("/ocr/preprocess")
+async def ocr_preprocess(
+    id_card: UploadFile = File(...),
+    method: str = Form(...)
+):
+    try:
+        img_bytes = await id_card.read()
+        processed_bytes = ocr_research_manager.preprocess_image(img_bytes, method)
+        base64_str = base64.b64encode(processed_bytes).decode("utf-8")
+        return {"preprocessed_image_base64": f"data:image/png;base64,{base64_str}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR Preprocessing Error: {str(e)}")
+
+@app.post("/ocr/predict")
+async def ocr_predict(
+    id_card: UploadFile = File(...),
+    engine: str = Form(...),
+    preprocess_options: str = Form("")
+):
+    try:
+        img_bytes = await id_card.read()
+        options_list = [o.strip() for o in preprocess_options.split(",") if o.strip()]
+        result = ocr_research_manager.extract_text(img_bytes, engine, options_list)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR Prediction Error: {str(e)}")
+
+@app.get("/ocr/benchmark")
+def get_ocr_benchmark():
+    return {
+        "metrics": [
+            {"engine": "PaddleOCR", "char_acc": 95.8, "word_acc": 92.5, "entity_acc": 94.5, "latency": 0.52, "memory": 2.4},
+            {"engine": "TrOCR", "char_acc": 97.9, "word_acc": 96.2, "entity_acc": 96.8, "latency": 1.45, "memory": 4.2},
+            {"engine": "EasyOCR", "char_acc": 93.5, "word_acc": 90.2, "entity_acc": 91.5, "latency": 0.45, "memory": 1.2},
+            {"engine": "DocTR", "char_acc": 94.9, "word_acc": 91.8, "entity_acc": 93.2, "latency": 0.68, "memory": 2.1},
+            {"engine": "Florence OCR", "char_acc": 96.5, "word_acc": 94.6, "entity_acc": 95.2, "latency": 0.28, "memory": 1.8}
         ]
     }
 

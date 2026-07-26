@@ -722,6 +722,7 @@
             <button class="tab-btn active" id="tab-btn-kyc" onclick="switchTab('kyc')">Verification Console</button>
             <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">Evidence Graph Portal</button>
             <button class="tab-btn" id="tab-btn-vlm" onclick="switchTab('vlm')">VLM Intelligence</button>
+            <button class="tab-btn" id="tab-btn-ocr" onclick="switchTab('ocr')">OCR Research Lab</button>
         </div>
 
         <button class="logout-btn" onclick="handleLogout()">Exit Node</button>
@@ -1306,6 +1307,152 @@
         </div>
     </div>
 
+    <!-- Tab 4: OCR Research Lab -->
+    <div id="tab-content-ocr" class="tab-content-wrapper" style="display: none;">
+        <div class="container">
+            <!-- Left Side: OCR Preprocessing & Engine selection -->
+            <div class="card">
+                <div class="card-title">🔬 OCR Engine Selection & Filters</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Configure preprocessing filters and select your target OCR engine.
+                </div>
+                
+                <div class="input-group">
+                    <label for="ocr-engine-select">Target OCR Engine</label>
+                    <select id="ocr-engine-select" class="search-input" style="width: 100%; border-radius: 8px; font-family: 'Inter';">
+                        <option value="Florence OCR">Florence OCR (Fast/Highly Accurate)</option>
+                        <option value="TrOCR">TrOCR (Transformer-based Sequence-to-Sequence)</option>
+                        <option value="PaddleOCR">PaddleOCR (Robust Multilingual OCR)</option>
+                        <option value="DocTR">DocTR (Document Text Recognition)</option>
+                        <option value="EasyOCR" selected>EasyOCR (PyTorch OCR Engine)</option>
+                    </select>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px;">Toggle Preprocessing Filters</div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                            <input type="checkbox" id="ocr-filter-denoise"> Denoising Filter (Noise reduction)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                            <input type="checkbox" id="ocr-filter-contrast"> Contrast Enhancement (Adaptive CLAHE Equalizer)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                            <input type="checkbox" id="ocr-filter-deskew" checked> Deskewing Rotation (Text angle correction)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer;">
+                            <input type="checkbox" id="ocr-filter-superres"> Super-Resolution (Interpolation scale & sharpening)
+                        </label>
+                    </div>
+                </div>
+                
+                <button class="action-btn" onclick="runOCRResearchScan()" style="margin-top: 25px;">Run OCR Research Scan</button>
+                <div id="ocr-loader" class="loader"></div>
+                
+                <!-- Dual Image Preview -->
+                <div class="upload-grid" style="margin-top: 25px;">
+                    <div class="card" style="padding: 10px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 10px; color: var(--text-sub); margin-bottom: 8px;">ORIGINAL UPLOAD</div>
+                        <div class="viewer-container" style="min-height: 120px;">
+                            <img id="ocr-orig-preview" class="viewer-img" style="max-height: 120px; display: block;" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='60'></svg>" alt="Original Document View">
+                        </div>
+                    </div>
+                    <div class="card" style="padding: 10px; background: rgba(0,0,0,0.15)">
+                        <div style="font-size: 10px; color: var(--text-sub); margin-bottom: 8px;">FILTERED DOCUMENT</div>
+                        <div class="viewer-container" style="min-height: 120px;">
+                            <img id="ocr-filtered-preview" class="viewer-img" style="max-height: 120px; display: block;" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='60'></svg>" alt="Filtered Document View">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side: Telemetry output & raw text -->
+            <div class="card">
+                <div class="card-title">📄 OCR Extraction & Metrics</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Evaluates accuracy error rates and computation specs on the current file.
+                </div>
+                
+                <div class="chart-box" style="background: rgba(0,0,0,0.15);">
+                    <div style="font-family: 'Outfit'; font-size: 14px; font-weight: 600; margin-bottom: 15px;">OCR Quality Telemetry</div>
+                    
+                    <div class="chart-bar-container">
+                        <div class="chart-label-row">
+                            <span>Character Accuracy (CER)</span>
+                            <span id="ocr-telemetry-char">--%</span>
+                        </div>
+                        <div class="progress-meter">
+                            <div id="ocr-bar-char" class="progress-bar-fill bar-adaptive" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-bar-container">
+                        <div class="chart-label-row">
+                            <span>Word Accuracy (WER)</span>
+                            <span id="ocr-telemetry-word">--%</span>
+                        </div>
+                        <div class="progress-meter">
+                            <div id="ocr-bar-word" class="progress-bar-fill bar-adaptive" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-bar-container">
+                        <div class="chart-label-row">
+                            <span>Entity F1 Extraction</span>
+                            <span id="ocr-telemetry-entity">--%</span>
+                        </div>
+                        <div class="progress-meter">
+                            <div id="ocr-bar-entity" class="progress-bar-fill bar-adaptive" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-bar-container">
+                        <div class="chart-label-row">
+                            <span>Inference Latency</span>
+                            <span id="ocr-telemetry-latency">-- s</span>
+                        </div>
+                        <div class="progress-meter">
+                            <div id="ocr-bar-latency" class="progress-bar-fill bar-static" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 25px; padding: 20px; background: rgba(0,0,0,0.15)">
+                    <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 8px;">EXTRACTED OCR TEXT</div>
+                    <div id="ocr-raw-text-output" style="font-family: monospace; font-size: 11px; color: #a2b4cd; min-height: 100px;">
+                        Awaiting text extraction...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparative Benchmarking Matrix Table -->
+        <div class="container" style="grid-template-columns: 1fr; margin-top: 0;">
+            <div class="card">
+                <div class="card-title">📊 OCR Engine Benchmark Comparison Matrix</div>
+                <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px;">
+                    Comparative metrics showing character accuracy (1-CER), word accuracy (1-WER), extraction F1, latencies, and memory footprints.
+                </div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>OCR Engine</th>
+                            <th>Char Acc (CER)</th>
+                            <th>Word Acc (WER)</th>
+                            <th>Entity F1</th>
+                            <th>Avg Latency</th>
+                            <th>VRAM Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ocr-benchmarks-table-body">
+                        <!-- Loaded dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         let activeLearningCounter = 0;
         let webcamStream = null;
@@ -1331,18 +1478,22 @@
             const btnKyc = document.getElementById('tab-btn-kyc');
             const btnGraph = document.getElementById('tab-btn-graph');
             const btnVlm = document.getElementById('tab-btn-vlm');
+            const btnOcr = document.getElementById('tab-btn-ocr');
             
             const contentKyc = document.getElementById('tab-content-kyc');
             const contentGraph = document.getElementById('tab-content-graph');
             const contentVlm = document.getElementById('tab-content-vlm');
+            const contentOcr = document.getElementById('tab-content-ocr');
 
             // Deactivate all
             btnKyc.classList.remove('active');
             btnGraph.classList.remove('active');
             btnVlm.classList.remove('active');
+            btnOcr.classList.remove('active');
             contentKyc.style.display = 'none';
             contentGraph.style.display = 'none';
             contentVlm.style.display = 'none';
+            contentOcr.style.display = 'none';
 
             if (tab === 'kyc') {
                 btnKyc.classList.add('active');
@@ -1356,6 +1507,10 @@
                 contentVlm.style.display = 'block';
                 fetchVLMBenchmarks();
                 fetchFinetuneBenchmarks();
+            } else if (tab === 'ocr') {
+                btnOcr.classList.add('active');
+                contentOcr.style.display = 'block';
+                fetchOCRBenchmarks();
             }
         }
 
@@ -1484,6 +1639,8 @@
                     preview.style.display = 'block';
                     if (inputId === 'id-input') {
                         document.getElementById('viewer-main-img').src = e.target.result;
+                        document.getElementById('ocr-orig-preview').src = e.target.result;
+                        document.getElementById('ocr-filtered-preview').src = e.target.result;
                     }
                 }
                 reader.readAsDataURL(file);
@@ -2168,6 +2325,109 @@
             } catch (err) {
                 console.error(err);
                 consoleBox.innerHTML += `<br><span style="color: var(--danger)">[Error] Fine-tuning job failed: ${err.message}</span>`;
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // OCR RESEARCH LAB CONTROLLERS
+        // ==========================================
+        async function fetchOCRBenchmarks() {
+            try {
+                const response = await fetch("/ocr/benchmark");
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('ocr-benchmarks-table-body');
+                tableBody.innerHTML = '';
+                
+                data.metrics.forEach(m => {
+                    const rowClass = m.engine.includes('Florence') ? 'style="color: var(--primary)"' : '';
+                    tableBody.innerHTML += `
+                        <tr ${rowClass}>
+                            <td><strong>${m.engine}</strong></td>
+                            <td>${m.char_acc.toFixed(1)}%</td>
+                            <td>${m.word_acc.toFixed(1)}%</td>
+                            <td>${m.entity_acc.toFixed(1)}%</td>
+                            <td>${m.latency.toFixed(2)}s</td>
+                            <td>${m.memory.toFixed(1)}GB</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("OCR benchmarks fetch failed:", err);
+            }
+        }
+
+        async function runOCRResearchScan() {
+            const idFile = document.getElementById('id-input').files[0];
+            if (!idFile) {
+                alert("Please select a document image scan in Tab 1 (Verification Console) first.");
+                return;
+            }
+
+            const engine = document.getElementById('ocr-engine-select').value;
+            
+            // Build options list
+            const options = [];
+            if (document.getElementById('ocr-filter-denoise').checked) options.push("Denoising");
+            if (document.getElementById('ocr-filter-contrast').checked) options.push("Contrast Enhancement");
+            if (document.getElementById('ocr-filter-deskew').checked) options.push("Deskewing");
+            if (document.getElementById('ocr-filter-superres').checked) options.push("Super-Resolution");
+            
+            const loader = document.getElementById('ocr-loader');
+            loader.style.display = 'block';
+
+            // 1. Fetch preprocessed image preview
+            // We apply the first selected filter or the deskew by default for visual display
+            const activeMethod = options.length > 0 ? options[0] : "Deskewing";
+            
+            const preprocessForm = new FormData();
+            preprocessForm.append("id_card", idFile);
+            preprocessForm.append("method", activeMethod);
+
+            try {
+                const prepResponse = await fetch("/ocr/preprocess", {
+                    method: "POST",
+                    body: preprocessForm
+                });
+                const prepRes = await prepResponse.json();
+                document.getElementById('ocr-filtered-preview').src = prepRes.preprocessed_image_base64;
+            } catch (err) {
+                console.error("Preprocessing preview failed:", err);
+            }
+
+            // 2. Fetch OCR predictions
+            const formData = new FormData();
+            formData.append("id_card", idFile);
+            formData.append("engine", engine);
+            formData.append("preprocess_options", options.join(","));
+
+            try {
+                const response = await fetch("/ocr/predict", {
+                    method: "POST",
+                    body: formData
+                });
+                const res = await response.json();
+
+                // Update text
+                document.getElementById('ocr-raw-text-output').innerText = res.extracted_text;
+
+                // Update telemetry
+                document.getElementById('ocr-telemetry-char').innerText = res.char_accuracy.toFixed(1) + "%";
+                document.getElementById('ocr-telemetry-word').innerText = res.word_accuracy.toFixed(1) + "%";
+                document.getElementById('ocr-telemetry-entity').innerText = res.entity_accuracy.toFixed(1) + "%";
+                document.getElementById('ocr-telemetry-latency').innerText = res.latency.toFixed(2) + " s";
+
+                // Update progress meters
+                document.getElementById('ocr-bar-char').style.width = res.char_accuracy.toFixed(0) + "%";
+                document.getElementById('ocr-bar-word').style.width = res.word_accuracy.toFixed(0) + "%";
+                document.getElementById('ocr-bar-entity').style.width = res.entity_accuracy.toFixed(0) + "%";
+                document.getElementById('ocr-bar-latency').style.width = Math.min(100, (res.latency / 3.0) * 100) + "%";
+
+            } catch (err) {
+                console.error(err);
+                alert("OCR prediction execution failed: " + err.message);
             } finally {
                 loader.style.display = 'none';
             }
